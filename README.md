@@ -1,36 +1,93 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🛍️ North Fashion Store - Full-Stack E-commerce
 
-## Getting Started
+A premium, high-performance e-commerce frontend built with **Next.js 15**, **Tailwind CSS**, and **JavaScript**. This project serves as the flagship storefront for North Fashion, offering a seamless shopping experience integrated with a custom-built REST API.
 
-First, run the development server:
+## 🚀 Overview
+
+North Fashion Store is designed for speed, SEO, and scalability. It features a modern App Router architecture, server-side data fetching, and a mobile-first responsive design. The project is engineered to handle complex product variants (size, color, stock) while maintaining a lightning-fast user interface.
+
+## ✨ Key Features
+
+- **⚡ Next.js 15 App Router:** Leveraging the latest React features for optimized routing and layouts.
+- **🎨 Tailwind Styling:** A sleek, modern UI with customized components for a premium brand feel.
+- **🔍 Advanced Discovery:** Real-time product search and category-based filtering.
+- **📦 Variant System:** Support for multiple product variants with dynamic stock management.
+- **📱 Responsive Design:** Fully optimized for mobile, tablet, and desktop screens.
+- **🛠️ Admin Integration:** Secure routes for product management and inventory updates.
+
+## 🛠️ Tech Stack
+
+- **Framework:** Next.js 15 (App Router)
+- **Language:** JavaScript (ES6+)
+- **Styling:** Tailwind CSS
+- **Icons:** Lucide React
+- **API Fetching:** Fetch API / Axios
+- **State Management:** React Context API
+
+## 🚦 Getting Started
+
+Follow these steps to set up the project locally:
+
+1️⃣ Clone the Repository
 
 ```bash
+git clone [https://github.com/your-username/north-frontend.git](https://github.com/your-username/north-frontend.git)
+cd north-frontend
+
+2️⃣ Install Dependencies
+npm install
+
+3️⃣ Environment Configuration
+
+Create a .env.local file at the root of the project and add:
+
+NEXT_PUBLIC_API_URL=http://localhost:7000
+NEXT_PUBLIC_APP_ENV=development
+
+4️⃣ Run Development Server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+
+
+Open http://localhost:3000
+ in your browser.
+
+📂 Project Structure
+src/
+├── app/            # Main application routes, pages, and layouts
+├── components/     # Reusable UI components (Navbar, Footer, Product Cards)
+├── context/        # Global state (Cart, User Auth Context)
+├── utils/          # API helper functions and constants
+├── assets/         # Global styles and static images
+
+🗺️ Roadmap
+
+JWT User Authentication (Login/Register)
+
+Shopping Cart Persistence with LocalStorage
+
+Payment Gateway Integration (SSLCommerz / Stripe)
+
+User Wishlist & Order History
+
+Progressive Web App (PWA) support
+
+🤝 Contributing
+
+Contributions are welcome! Follow these steps:
+
+Fork the project
+
+Create your feature branch (git checkout -b feature/AmazingFeature)
+
+Commit your changes (git commit -m 'Add some AmazingFeature')
+
+Push to the branch (git push origin feature/AmazingFeature)
+
+Open a pull request
+
+📄 License
+
+Distributed under the MIT License. See LICENSE for more information.
+
+Developed with ❤️ by Syed Rana
 ```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
