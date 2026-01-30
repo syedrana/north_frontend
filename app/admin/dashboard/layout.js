@@ -26,9 +26,8 @@ export default function DashboardLayout({ children }) {
       name: 'Product Management', 
       icon: ReceiptText,
       children: [
-        { name: 'Add Category', href: "/admin/dashboard/category" },
-        { name: 'Product List', href: "/admin/dashboard/products/list" },
-        { name: 'Product Variant', href: "/admin/dashboard/products/variant" },
+        { name: 'Category', href: "/admin/dashboard/category" },
+        { name: 'Product', href: "/admin/dashboard/products/list" },
       ]
     },
     

@@ -1,21 +1,64 @@
 'use client';
 import { usePathname } from 'next/navigation';
+import { useEffect, useState } from "react";
 import { Toaster } from "react-hot-toast";
-import { useAuth } from "../hooks/useAuth";
 // import Footer from './components/footer';
 // import MoveToTopButton from './components/MoveToTopButton';
-// import Navbar from './components/navbars';
+import api from '@/lib/apiServer';
+import Navbar from './components/layout/Navbar';
 
 export default function ClientRootWrapper({ children }) {
   const pathname = usePathname();
-  const showNavbar = !pathname.startsWith('/dashboard') && !pathname.startsWith('/admin');
-  // const showNavbar = !pathname.startsWith('/admin');
-  useAuth();
+  
+  const [user, setUser] = useState(null);
+  
+  const hideNavbarRoutes = ['/admin', '/dashboard'];
+
+  const showNavbar = !hideNavbarRoutes.some(route =>
+    pathname.startsWith(route)
+  );
+
+  const fetchUser = async () => {
+    try {
+      const res = await api.get("/customer/me");
+      if (res.data.success) {
+        setUser(res.data.user);
+      } else {
+        setUser(null);
+      }
+    } catch {
+      setUser(null);
+    }
+  };
+
+  useEffect(() => {
+    let mounted = true;
+
+    const initAuth = async () => {
+      if (!mounted) return;
+      await fetchUser();
+    };
+
+    initAuth();
+
+    const handler = () => fetchUser();
+  window.addEventListener("auth-changed", handler);
+
+    return () => {
+      mounted = false;
+      window.removeEventListener("auth-changed", handler);
+    };
+  }, []);
+
+
 
   return (
     <>
-      {/* {showNavbar && <Navbar />} */}
+      {showNavbar && <Navbar user={user} setUser={setUser} />}
+      
+
       {children}
+
       {/* {showNavbar && <Footer />} */}
       {/* <MoveToTopButton /> */}
       <Toaster

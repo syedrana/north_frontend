@@ -70,6 +70,19 @@ export const setupAutoLogout = () => {
 };
 
 export const isPublicRoute = (pathname) => {
-  const publicRoutes = ["/", "/admin", "/admin/login", "/admin/forgot-password"];
-  return publicRoutes.includes(pathname);
+  // Static public routes
+  if (pathname === "/" || pathname === "/shop") return true;
+
+  // Dynamic public routes
+  if (pathname.startsWith("/product/")) return true;
+
+  // Admin login page only
+  if (pathname === "/admin") return true;
+
+  if (pathname === "/customer/registration") return true;
+
+  if (pathname === "/customer/login") return true;
+
+  return false;
 };
+
