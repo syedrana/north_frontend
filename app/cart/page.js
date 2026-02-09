@@ -24,6 +24,7 @@ export default async function CartPage() {
           Cookie: `token=${token}`, // 🔥 THIS FIXES IT
         },
         cache: "no-store",
+        next: { revalidate: 0 },
       }
     );
 

@@ -74,7 +74,9 @@ export default function Navbar({ user, setUser }) {
   // Logout handler
   const handleLogout = async () => {
     try {
-      await api.post("/customer/logout");
+      await api.post("/customer/logout", {}, {
+        withCredentials: true
+      });
       
       setUser(null);
       window.dispatchEvent(new Event("auth-changed"));

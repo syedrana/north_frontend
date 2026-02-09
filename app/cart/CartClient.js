@@ -198,15 +198,15 @@ export default function CartClient({ initialCart }) {
   };
 
   /* ================= EMPTY ================= */
-  if (!cart || cart.length === 0) {
-    return (
-      <div className="text-center mt-24">
-        <p className="text-xl text-gray-500">
-          Your cart is empty
-        </p>
-      </div>
-    );
-  }
+  // if (!cart || cart.length === 0) {
+  //   return (
+  //     <div className="text-center mt-24">
+  //       <p className="text-xl text-gray-500">
+  //         Your cart is empty
+  //       </p>
+  //     </div>
+  //   );
+  // }
 
   /* ================= UI ================= */
   return (
