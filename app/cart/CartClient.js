@@ -479,7 +479,7 @@ export default function CartClient() {
     return (
       <div className="text-center mt-24">
         <p className="text-xl text-gray-500">
-          Your cart is empty
+          cart is empty
         </p>
       </div>
     );
