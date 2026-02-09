@@ -262,10 +262,30 @@ export default function OrderSummary({
           <span>৳ {pricing.subtotal}</span>
         </div>
 
-        <div className="flex justify-between">
+        {/* <div className="flex justify-between">
           <span>Shipping</span>
           <span>৳ {pricing.shipping}</span>
+        </div> */}
+
+        {pricing.shipping === 0 && pricing.subtotal > 0 && (
+          <div className="bg-green-50 text-green-700 text-sm p-3 rounded-xl">
+            🚚 Free Delivery Applied
+          </div>
+        )}
+
+
+        <div className="flex justify-between">
+          <span>
+            Delivery
+            {pricing.shipping === 0 && (
+              <span className="ml-2 text-green-600 text-xs">
+                (Free)
+              </span>
+            )}
+          </span>
+          <span>৳ {pricing.shipping}</span>
         </div>
+
 
         {pricing.discount > 0 && (
           <div className="flex justify-between text-green-600">

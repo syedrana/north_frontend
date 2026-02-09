@@ -30,6 +30,13 @@ export default function DashboardLayout({ children }) {
         { name: 'Product', href: "/admin/dashboard/products/list" },
       ]
     },
+    { 
+      name: 'Setting', 
+      icon: ReceiptText,
+      children: [
+        { name: 'Delivery', href: "/admin/dashboard/setting/shipping" },
+      ]
+    },
     
   ], []);
 
