@@ -6,14 +6,17 @@ export const revalidate = 0; // cart always fresh
 export default async function CartPage() {
   const cookieStore = await cookies();
   const token = cookieStore.get("token")?.value;
-
-  let cartData = {
-    cart: [],
-    summary: { subtotal: 0, itemCount: 0 },
-  };
+  
+  let cartItems = [];
+  let summary = { subtotal: 0, itemCount: 0 };
 
   if (!token) {
-    return <CartClient initialCart={[]} initialSummary={cartData.summary} />;
+    return (
+      <CartClient
+        initialCart={cartItems}
+        initialSummary={summary}
+      />
+    );
   }
 
   try {
@@ -30,11 +33,11 @@ export default async function CartPage() {
 
     const data = await res.json();
 
-    if (data.success && data.cart) {
-      cartData = {
-        cart: data.cart.items,
-        summary: data.summary,
-      };
+    console.log("SERVER CART DATA:", data);
+
+    if (data.success && data.cart?.items) {
+      cartItems = data.cart.items;
+      summary = data.summary;
     }
   } catch (err) {
     console.error("Cart fetch failed", err);
@@ -42,8 +45,8 @@ export default async function CartPage() {
 
   return (
     <CartClient
-      initialCart={cartData.cart}
-      initialSummary={cartData.summary}
+      initialCart={cartItems}
+      initialSummary={summary}
     />
   );
 }

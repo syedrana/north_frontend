@@ -135,13 +135,15 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
-export default function CartClient({ initialCart }) {
-  const [cart, setCart] = useState(initialCart);
+export default function CartClient({ initialCart, initialSummary }) {
+  const [cart, setCart] = useState(initialCart ?? []);
   const [loadingId, setLoadingId] = useState(null);
   const router = useRouter();
 
   /* ================= SUMMARY ================= */
   const summary = useMemo(() => {
+    if (!cart.length) return initialSummary;
+
     const subtotal = cart.reduce(
       (sum, item) => sum + item.price * item.quantity,
       0
@@ -153,7 +155,7 @@ export default function CartClient({ initialCart }) {
     );
 
     return { subtotal, itemCount };
-  }, [cart]);
+  }, [cart, initialSummary]);
 
   /* ================= ACTIONS ================= */
   const updateQty = async (variantId, delta) => {
@@ -198,15 +200,15 @@ export default function CartClient({ initialCart }) {
   };
 
   /* ================= EMPTY ================= */
-  // if (!cart || cart.length === 0) {
-  //   return (
-  //     <div className="text-center mt-24">
-  //       <p className="text-xl text-gray-500">
-  //         Your cart is empty
-  //       </p>
-  //     </div>
-  //   );
-  // }
+  if (!cart || cart.length === 0) {
+    return (
+      <div className="text-center mt-24">
+        <p className="text-xl text-gray-500">
+          Your cart is empty
+        </p>
+      </div>
+    );
+  }
 
   /* ================= UI ================= */
   return (
