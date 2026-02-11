@@ -347,7 +347,7 @@ export default function ShopClient({
   /* ================= UI ================= */
   return (
     <div className="px-4 md:px-12 py-8">
-      <h1 className="text-3xl font-bold mb-8 text-center">Shop</h1>
+      {/* <h1 className="text-3xl font-bold mb-8 text-center">Shop</h1> */}
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
         {/* ================= LEFT SIDEBAR ================= */}
