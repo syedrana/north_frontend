@@ -914,9 +914,13 @@ export default function Navbar({ user, setUser }) {
   }, [searchOpen]);
 
   const handleSearch = (keyword) => {
-    if (!keyword) return;
-    
-    router.push(`/shop?search=${encodeURIComponent(keyword)}`);
+    if (!keyword.trim()) return;
+
+    if (pathname.startsWith("/shop")) {
+      router.replace(`/shop?search=${encodeURIComponent(keyword)}`);
+    } else {
+      router.push(`/shop?search=${encodeURIComponent(keyword)}`);
+    }
   };
 
 
@@ -945,6 +949,7 @@ export default function Navbar({ user, setUser }) {
         <Link href="/" className="text-xl font-bold tracking-wide">
           North Fashion
         </Link>
+        
 
         {/* DESKTOP MENU */}
         <nav className="hidden md:flex items-center gap-8 relative">
@@ -1007,7 +1012,7 @@ export default function Navbar({ user, setUser }) {
             <span className="hidden md:inline text-sm font-medium">Search</span>
           </button> */}
 
-          <div className="flex-1 mx-6 hidden md:block">
+          <div className="flex-1">
             <SearchBar
               placeholder="Search products..."
               onSearch={handleSearch}
