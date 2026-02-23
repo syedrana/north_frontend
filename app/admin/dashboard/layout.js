@@ -37,6 +37,15 @@ export default function DashboardLayout({ children }) {
         { name: 'Delivery', href: "/admin/dashboard/setting/shipping" },
       ]
     },
+    { 
+      name: 'Analytics', 
+      icon: ReceiptText,
+      children: [
+        { name: 'Overview', href: "/admin/dashboard/analytics/search/overview" },
+        { name: 'Keyword Intelligence', href: "/admin/dashboard/analytics/search/keywords" },
+        { name: 'Sessions', href: "/admin/dashboard/analytics/search/sessions" },
+      ]
+    },
     
   ], []);
 

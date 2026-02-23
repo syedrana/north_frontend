@@ -19,6 +19,23 @@ export default function ShopClient({
   const trackedRef = useRef("");
   const [analyticsId, setAnalyticsId] = useState("");
 
+  function useSessionId() {
+    const [sessionId, setSessionId] = useState(null);
+
+    useEffect(() => {
+      let sid = localStorage.getItem("searchSessionId");
+      if (!sid) {
+        sid = crypto.randomUUID(); // modern browsers
+        localStorage.setItem("searchSessionId", sid);
+      }
+      setSessionId(sid);
+    }, []);
+
+    return sessionId;
+  }
+
+  const sessionId = useSessionId();
+
   /* ================= URL PARAMS (STABLE PRIMITIVES) ================= */
   const search = params.get("search") || "";
   const minPrice = params.get("minPrice") || "";
@@ -69,12 +86,13 @@ export default function ShopClient({
 
         if (!ignore) setProducts(fetchedProducts);
 
-        if (search && trackedRef.current !== search) {
+        if (search && trackedRef.current !== search && sessionId) {
           trackedRef.current = search;
 
           const resAnalytics = await api.post("/searchanalytics/track", {
             keyword: search,
             resultCount: fetchedProducts.length,
+            sessionId: sessionId,
           });
 
           if (resAnalytics.data?.data?._id) {
@@ -94,7 +112,7 @@ export default function ShopClient({
     return () => {
       ignore = true;
     };
-  }, [search, minPrice, maxPrice, sort, color, size, page]);
+  }, [search, minPrice, maxPrice, sort, color, size, page, sessionId]);
 
   /* ================= UI ================= */
   return (
@@ -189,7 +207,7 @@ export default function ShopClient({
             <div className="text-center py-20">No products found</div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {products.map((product) => (
+              {products.map((product, index) => (
                 <div
                   key={product._id}
                   className="bg-white rounded-lg shadow hover:shadow-lg transition overflow-hidden relative group"
@@ -199,13 +217,13 @@ export default function ShopClient({
                     // href={`/product/${product.slug}?searchId=${analyticsId}`}
                     href={
                       analyticsId 
-                      ? `/product/${product.slug}?searchId=${analyticsId}` 
+                      ? `/product/${product.slug}?searchId=${analyticsId}&pos=${index + 1}` 
                       : `/product/${product.slug}`
                     }
                     className="bg-white rounded-lg shadow hover:shadow-lg transition overflow-hidden"
                   >
                     {/* IMAGE */}
-                    <div className="relative w-full h-80">
+                    <div className="relative w-full h-60">
                       <Image
                         src={product.mainImage || "/placeholder.png"}
                         alt={product.name}

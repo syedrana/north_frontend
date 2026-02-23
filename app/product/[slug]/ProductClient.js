@@ -16,6 +16,7 @@ export default function ProductClient({
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const position = searchParams.get("pos");
 
   /* ================= STATE ================= */
   const [selectedVariant, setSelectedVariant] =
@@ -55,6 +56,7 @@ export default function ProductClient({
         await apiServer.patch("/searchanalytics/track-click", {
           searchId,
           productId: product._id,
+          position: Number(position) || null,
         });
       } catch (error) {
         console.error("Failed to track click", error);
@@ -62,7 +64,7 @@ export default function ProductClient({
     };
 
     trackClick();
-  }, [searchId, product._id]);
+  }, [searchId, product._id, position]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-10 grid grid-cols-1 md:grid-cols-2 gap-10">
