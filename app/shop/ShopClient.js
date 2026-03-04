@@ -7,6 +7,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import ProductSkeleton from "../components/ProductSkeleton";
 import ProductPreviewModal from "../components/product/ProductPreviewModal";
+import WishlistButton from "../components/wishlist/WishlistButton";
 
 export default function ShopClient({
   initialProducts = [],
@@ -25,7 +26,7 @@ export default function ShopClient({
     useEffect(() => {
       let sid = localStorage.getItem("searchSessionId");
       if (!sid) {
-        sid = crypto.randomUUID(); // modern browsers
+        sid = crypto.randomUUID(); 
         localStorage.setItem("searchSessionId", sid);
       }
       setSessionId(sid);
@@ -280,6 +281,10 @@ export default function ShopClient({
                       )}
                     </div>
                   </Link>
+                  
+
+                  <WishlistButton productId={product._id} />
+
                   <button
                     onClick={() => setPreviewProduct(product)}
                     className="

@@ -1,5 +1,6 @@
 "use client";
 
+import { useAuth } from "@/contexts/AuthContext";
 import api from "@/lib/api";
 import { clearGuestCart, getGuestCart } from "@/lib/guestCart";
 import { Box, Button, Stack, TextField, Typography } from "@mui/material";
@@ -9,6 +10,7 @@ import toast from "react-hot-toast";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { login } = useAuth();
 
   const [form, setForm] = useState({
     emailOrPhone: "",
@@ -24,6 +26,7 @@ export default function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+
     if (!form.emailOrPhone.trim()) {
       toast.error("Email or phone is required");
       return;
@@ -37,6 +40,8 @@ export default function LoginPage() {
     try {
       setLoading(true);
 
+      
+
       const guestCart = getGuestCart();
 
       const payload = {
@@ -45,8 +50,9 @@ export default function LoginPage() {
         guestCart,
       };
 
-      const res = await api.post("/customer/login", payload);
-      const data = res.data;
+      const data = await login(payload);
+      // const res = await api.post("/customer/login", payload);
+      // const data = res.data;
 
       if (!data.success) {
         toast.error(data.message);
@@ -54,9 +60,14 @@ export default function LoginPage() {
       }
 
       clearGuestCart();
+
+      if (data.success) {
+        await api.post("/wishlist/merge-after-login");
+      }
+
       toast.success("Login successful!");
-      window.dispatchEvent(new Event("auth-changed"));
-      window.dispatchEvent(new Event("cart-changed"));
+      // window.dispatchEvent(new Event("auth-changed"));
+      // window.dispatchEvent(new Event("cart-changed"));
       router.push("/"); // অথবা dashboard
     } catch (err) {
       toast.error(err.response?.data?.message || "Login failed");
@@ -70,7 +81,7 @@ export default function LoginPage() {
       <Box className="w-full max-w-md bg-white rounded-3xl p-8 shadow-xl">
         <Typography
           variant="h5"
-          className="text-gray-900 font-semibold text-center mb-8"
+          className="text-gray-900 font-semibold text-center m-8 pb-8"
         >
           Login to Your Account
         </Typography>

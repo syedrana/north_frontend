@@ -1,5 +1,6 @@
+import QueryProvider from "@/providers/QueryProvider";
 import { Geist, Geist_Mono } from "next/font/google";
-
+import { AuthProvider } from "../contexts/AuthContext";
 import ClientRootWrapper from './ClientRootWrapper';
 import "./globals.css";
 
@@ -24,8 +25,13 @@ export default function RootLayout({ children }) {
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ClientRootWrapper>{children}</ClientRootWrapper>
-        
+        <QueryProvider>
+          <AuthProvider>
+            <ClientRootWrapper>
+              {children}
+            </ClientRootWrapper>
+          </AuthProvider>
+        </QueryProvider>        
       </body>
     </html>
   );
