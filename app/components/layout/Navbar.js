@@ -1,9 +1,6 @@
 "use client";
 
 import { useAuth } from "@/contexts/AuthContext";
-import api from "@/lib/apiServer";
-import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
-import { Badge, IconButton } from "@mui/material";
 import { AnimatePresence, motion, } from "framer-motion";
 import { ChevronDown, LogOut, Menu, User, X } from "lucide-react";
 import Image from "next/image";
@@ -11,6 +8,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useLogout } from "../../../hooks/useLogout";
+import NavbarCart from "../../components/cart/NavbarCart";
 import SearchBar from "../../components/SearchBar/SearchBar";
 import NavbarHeart from "../../components/wishlist/NavbarHeart";
 
@@ -23,7 +21,6 @@ export default function Navbar() {
   const [menOpen, setMenOpen] = useState(false);
   const [womenOpen, setWomenOpen] = useState(false);
   const [activeMega, setActiveMega] = useState(null);
-  const [cartCount, setCartCount] = useState(0);
   const [scrolled, setScrolled] = useState(false);
 
   const inputRef = useRef(null);
@@ -42,31 +39,6 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  /* ================= CART COUNT ================= */
-  const loadCartCount = async () => {
-    try {
-      const res = await api.get("/cart");
-      if (res.data?.success) {
-        setCartCount(res.data.summary.itemCount || 0);
-        return;
-      }
-    } catch {
-      const guestCart = JSON.parse(localStorage.getItem("guest_cart") || "[]");
-      const totalQty = guestCart.reduce((s, i) => s + i.quantity, 0);
-      setCartCount(totalQty);
-    }
-  };
-
-  useEffect(() => {
-    queueMicrotask(loadCartCount);
-    const handler = () => loadCartCount();
-    window.addEventListener("cart-changed", handler);
-    window.addEventListener("auth-changed", handler);
-    return () => {
-      window.removeEventListener("cart-changed", handler);
-      window.removeEventListener("auth-changed", handler);
-    };
-  }, []);
 
   /* ================= BODY LOCK (SHIFT FIX) ================= */
   useEffect(() => {
@@ -192,21 +164,11 @@ export default function Navbar() {
             />
           </div>
 
+          {/* Wishlist — STABLE */}
           <NavbarHeart />
 
           {/* CART — STABLE */}
-          <Link href="/cart">
-            <IconButton className="p-0 relative">
-              <Badge
-                badgeContent={cartCount}
-                color="primary"
-                overlap="circular"
-                sx={{ "& .MuiBadge-badge": { minWidth: 18, height: 18 } }}
-              >
-                <ShoppingCartIcon />
-              </Badge>
-            </IconButton>
-          </Link>
+          <NavbarCart />
 
           {/* USER */}
           {user && (

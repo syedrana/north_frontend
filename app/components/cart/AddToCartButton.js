@@ -1,8 +1,8 @@
 "use client";
 
 import api from "@/lib/apiSet";
-import { addToGuestCart } from "@/lib/guestCart";
 import { Button } from "@mui/material";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
@@ -10,10 +10,10 @@ export default function AddToCartButton({
   variantId,
   disabled = false,
   quantity = 1,
-  // isAuthenticated = false,
+  isAuthenticated = false,
 }) {
   const [loading, setLoading] = useState(false);
-  
+  const router = useRouter();
 
   const handleAddToCart = async () => {
     if (!variantId) {
@@ -21,15 +21,11 @@ export default function AddToCartButton({
       return;
     }
 
-
-    // /* ================= GUEST USER ================= */
-    // if (!isAuthenticated) {
-    //   addToGuestCart(variantId, quantity);
-    //   toast.success("Added to cart 🛒");
-    //   window.dispatchEvent(new Event("cart-changed"));
-    //   return;
-    // }
-
+    if (!isAuthenticated) {
+      toast.error("Please login to add items to cart");
+      router.push("/customer/login");
+      return;
+    }
 
     try {
       setLoading(true);
@@ -50,15 +46,12 @@ export default function AddToCartButton({
         return;
       }
 
-      throw new Error("Unauthenticated");
+      throw new Error("Add to cart failed");
 
     } catch (error) {
-      // toast.error(
-      //   error.response?.data?.message || "Something went wrong"
-      // );
-      addToGuestCart(variantId, quantity);
-      toast.success("Added to cart 🛒");
-      window.dispatchEvent(new Event("cart-changed"));
+      toast.error(
+        error.response?.data?.message || "Something went wrong"
+      );
     } finally {
       setLoading(false);
     }
