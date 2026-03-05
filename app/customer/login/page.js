@@ -1,7 +1,6 @@
 "use client";
 
 import { useAuth } from "@/contexts/AuthContext";
-import api from "@/lib/api";
 import { clearGuestCart, getGuestCart } from "@/lib/guestCart";
 import { Box, Button, Stack, TextField, Typography } from "@mui/material";
 import { useRouter } from "next/navigation";
@@ -61,9 +60,9 @@ export default function LoginPage() {
 
       clearGuestCart();
 
-      if (data.success) {
-        await api.post("/wishlist/merge-after-login");
-      }
+      // if (data.success) {
+      //   await api.post("/wishlist/merge-after-login");
+      // }
 
       toast.success("Login successful!");
       // window.dispatchEvent(new Event("auth-changed"));

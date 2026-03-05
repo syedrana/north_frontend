@@ -1,5 +1,5 @@
-import WishlistPageClient from "@/components/wishlist/WishlistPageClient";
-import { getWishlist } from "@/lib/api/wishlist";
+import { getWishlist } from "../../lib/wishlist";
+import WishlistPageClient from "./WishlistPageClient";
 
 export const dynamic = "force-dynamic";
 
