@@ -1,8 +1,9 @@
 "use client";
 
+import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:7000";
 
@@ -17,10 +18,30 @@ export default function WishlistPageClient({ initialItems, initialTotalItems }) 
   const [items, setItems] = useState(initialItems);
   const [totalItems, setTotalItems] = useState(initialTotalItems);
   const [isPending, startTransition] = useTransition();
+  const [removingIds, setRemovingIds] = useState([]);
+  const removeTimersRef = useRef({});
 
   const isEmpty = useMemo(() => items.length === 0, [items]);
 
   const removeItem = (productId) => {
+
+    const previousItems = items;
+    const previousTotal = totalItems;
+
+    setRemovingIds((prev) => (prev.includes(productId) ? prev : [...prev, productId]));
+
+    removeTimersRef.current[productId] = setTimeout(() => {
+      setItems((prev) => prev.filter((item) => item._id !== productId));
+      setTotalItems((prev) => {
+        const nextCount = Math.max(prev - 1, 0);
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("wishlist-count-changed", { detail: { count: nextCount } }));
+        }
+        return nextCount;
+      });
+      delete removeTimersRef.current[productId];
+    }, 220);
+
     startTransition(async () => {
       const response = await fetch(`${API_BASE_URL}/wishlist/${productId}`, {
         method: "DELETE",
@@ -28,13 +49,38 @@ export default function WishlistPageClient({ initialItems, initialTotalItems }) 
         headers: { "Content-Type": "application/json" },
       });
 
-      if (!response.ok) return;
+      if (!response.ok) {
+        clearTimeout(removeTimersRef.current[productId]);
+        delete removeTimersRef.current[productId];
+        setRemovingIds((prev) => prev.filter((id) => id !== productId));
+        setItems(previousItems);
+        setTotalItems(previousTotal);
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("wishlist-count-changed", { detail: { count: previousTotal } }));
+        }
+        return;
+      }
 
       const json = await response.json();
 
-      if (json.success && json.removed) {
-        setItems((prev) => prev.filter((item) => item._id !== productId));
-        setTotalItems(json.totalItems);
+      if (json?.success) {
+        if (typeof json.totalItems === "number") {
+          setTotalItems(json.totalItems);
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(new CustomEvent("wishlist-count-changed", { detail: { count: json.totalItems } }));
+          }
+        }
+        setRemovingIds((prev) => prev.filter((id) => id !== productId));
+        return;
+      }
+
+      clearTimeout(removeTimersRef.current[productId]);
+      delete removeTimersRef.current[productId];
+      setRemovingIds((prev) => prev.filter((id) => id !== productId));
+      setItems(previousItems);
+      setTotalItems(previousTotal);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("wishlist-count-changed", { detail: { count: previousTotal } }));
       }
     });
   };
@@ -60,8 +106,21 @@ export default function WishlistPageClient({ initialItems, initialTotalItems }) 
         </div>
       ) : (
         <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <AnimatePresence initial={false}>
           {items.map((item) => (
-            <article key={item._id} className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
+            <motion.article
+              key={item._id}
+              layout
+              initial={{ opacity: 1, y: 0, scale: 1 }}
+              animate={
+                removingIds.includes(item._id)
+                  ? { opacity: 0, y: -8, scale: 0.98 }
+                  : { opacity: 1, y: 0, scale: 1 }
+              }
+              exit={{ opacity: 0, y: -16, scale: 0.95 }}
+              transition={{ duration: 0.22, ease: "easeOut" }}
+              className="overflow-hidden rounded-2xl border border-zinc-200 bg-white"
+            >
               <div className="relative aspect-[4/3] bg-zinc-100">
                 {item.preview?.image ? (
                   <Image
@@ -100,14 +159,21 @@ export default function WishlistPageClient({ initialItems, initialTotalItems }) 
                 <button
                   type="button"
                   onClick={() => removeItem(item._id)}
-                  disabled={isPending}
+                  disabled={isPending || removingIds.includes(item._id)}
                   className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   Remove from wishlist
                 </button>
+                <Link
+                  href={`/product/${item.slug}`}
+                  className="inline-flex w-full items-center justify-center rounded-lg bg-zinc-900 px-3 py-2 text-sm font-medium text-white transition hover:bg-zinc-700"
+                >
+                  Product details
+                </Link>
               </div>
-            </article>
+            </motion.article>
           ))}
+          </AnimatePresence>
         </section>
       )}
     </main>
