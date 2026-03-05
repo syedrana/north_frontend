@@ -1,7 +1,6 @@
 "use client";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { clearGuestCart, getGuestCart } from "@/lib/guestCart";
 import { Box, Button, Stack, TextField, Typography } from "@mui/material";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -39,35 +38,20 @@ export default function LoginPage() {
     try {
       setLoading(true);
 
-      
-
-      const guestCart = getGuestCart();
-
       const payload = {
         emailOrPhone: form.emailOrPhone,
         password: form.password,
-        guestCart,
       };
 
       const data = await login(payload);
-      // const res = await api.post("/customer/login", payload);
-      // const data = res.data;
 
       if (!data.success) {
         toast.error(data.message);
         return;
       }
 
-      clearGuestCart();
-
-      // if (data.success) {
-      //   await api.post("/wishlist/merge-after-login");
-      // }
-
       toast.success("Login successful!");
-      // window.dispatchEvent(new Event("auth-changed"));
-      // window.dispatchEvent(new Event("cart-changed"));
-      router.push("/"); // অথবা dashboard
+      router.push("/"); 
     } catch (err) {
       toast.error(err.response?.data?.message || "Login failed");
     } finally {

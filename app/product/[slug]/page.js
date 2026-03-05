@@ -1,5 +1,4 @@
 import apiServer from "@/lib/apiServer";
-import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import ProductClient from "./ProductClient";
 
@@ -42,10 +41,6 @@ export default async function ProductPage({ params, searchParams  }) {
   const { slug } = await params;
   const { variant, searchId } = await searchParams;
 
-  const cookieStore = await cookies();
-  const accessToken = cookieStore.get?.("accessToken")?.value;
-  const isAuthenticated = Boolean(accessToken);
-
   let product;
 
   try {
@@ -71,7 +66,6 @@ export default async function ProductPage({ params, searchParams  }) {
       product={product}
       variants={variants}
       defaultVariant={defaultVariant}
-      isAuthenticated={isAuthenticated}
       searchId={searchId}
     />
   );

@@ -81,6 +81,7 @@ export default function CartClient() {
             : i
         )
       );
+      window.dispatchEvent(new Event("cart-changed"));
     } finally {
       setLoadingId(null);
     }
@@ -94,6 +95,7 @@ export default function CartClient() {
       setCart((prev) =>
         prev.filter((i) => i.variantId._id !== variantId)
       );
+      window.dispatchEvent(new Event("cart-changed"));
     } finally {
       setLoadingId(null);
     }

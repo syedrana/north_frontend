@@ -1,5 +1,6 @@
 "use client";
 
+import { useAuth } from "@/contexts/AuthContext";
 import api from "@/lib/apiSet";
 import { Button } from "@mui/material";
 import { useRouter } from "next/navigation";
@@ -10,10 +11,10 @@ export default function AddToCartButton({
   variantId,
   disabled = false,
   quantity = 1,
-  isAuthenticated = false,
 }) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { user } = useAuth();
 
   const handleAddToCart = async () => {
     if (!variantId) {
@@ -21,7 +22,7 @@ export default function AddToCartButton({
       return;
     }
 
-    if (!isAuthenticated) {
+    if (!user) {
       toast.error("Please login to add items to cart");
       router.push("/customer/login");
       return;
