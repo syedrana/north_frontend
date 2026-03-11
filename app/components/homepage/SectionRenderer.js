@@ -3,6 +3,7 @@ import CategoryGrid from "./CategoryGrid";
 import FlashSale from "./FlashSale";
 import HeroBanner from "./HeroBanner";
 import ProductGrid from "./ProductGrid";
+import TrendingProducts from "./TrendingProducts";
 
 function CampaignBanner({ section }) {
   return (
@@ -40,6 +41,14 @@ function renderSection(section, index) {
           key={section?._id || section?.id || index}
           title={section?.title}
           endsAt={section?.endsAt}
+          products={section?.items}
+        />
+      );
+    case "trending_products":
+      return (
+        <TrendingProducts
+          key={section?._id || section?.id || index}
+          title={section?.title}
           products={section?.items}
         />
       );
