@@ -3,6 +3,7 @@ import CategoryGrid from "./CategoryGrid";
 import FlashSale from "./FlashSale";
 import HeroBanner from "./HeroBanner";
 import ProductGrid from "./ProductGrid";
+import RecentlyViewedProducts from "./RecentlyViewedProducts";
 import TrendingProducts from "./TrendingProducts";
 
 function CampaignBanner({ section }) {
@@ -52,6 +53,8 @@ function renderSection(section, index) {
           products={section?.items}
         />
       );
+    case "recently_viewed":
+      return <RecentlyViewedProducts key={section?._id || section?.id || index} title={section?.title} />;
     default:
       return null;
   }
