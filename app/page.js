@@ -1,15 +1,29 @@
+"use client";
+
+import { useHomepage } from "@/hooks/useHomepage";
+import SectionRenderer from "./components/homepage/SectionRenderer";
 
 export default function Home() {
+  const { loading, error, sections } = useHomepage();
+
+  if (loading) {
+    return (
+      <main className="mx-auto w-full max-w-7xl px-4 py-8">
+        <p className="text-sm text-gray-500">Loading homepage...</p>
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main className="mx-auto w-full max-w-7xl px-4 py-8">
+        <p className="text-sm text-red-600">{error}</p>
+      </main>
+    );
+  }
   return (
-    <div className="flex h-screen items-center justify-center bg-slate-900">
-      <div className="rounded-xl bg-white p-8 shadow-2xl">
-        <h1 className="text-3xl font-extrabold text-blue-600">
-          Wel Conme 🚀
-        </h1>
-        <p className="mt-2 text-gray-600">
-          Your clothing ecommerce project is ready with the latest styling.
-        </p>
-      </div>
-    </div>
+    <main className="mx-auto w-full max-w-7xl px-4 py-8">
+      <SectionRenderer sections={sections} />
+    </main>
   );
 }
