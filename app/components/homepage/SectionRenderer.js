@@ -1,5 +1,6 @@
 import Image from "next/image";
 import CategoryGrid from "./CategoryGrid";
+import FlashSale from "./FlashSale";
 import HeroBanner from "./HeroBanner";
 import ProductGrid from "./ProductGrid";
 
@@ -33,6 +34,15 @@ function renderSection(section, index) {
       return <ProductGrid key={section?._id || section?.id || index} title={section?.title} products={section?.items} />;
     case "campaign_banner":
       return <CampaignBanner key={section?._id || section?.id || index} section={section} />;
+      case "flash_sale":
+      return (
+        <FlashSale
+          key={section?._id || section?.id || index}
+          title={section?.title}
+          endsAt={section?.endsAt}
+          products={section?.items}
+        />
+      );
     default:
       return null;
   }
