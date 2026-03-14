@@ -1,7 +1,7 @@
 "use client";
 
 import api from "@/lib/api";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
 const SECTION_TYPES = [
@@ -60,6 +60,20 @@ const parseSettingsOrThrow = (settingsJson) => {
   }
 };
 
+const parseSettingsOrFallback = (settingsJson) => {
+  try {
+    return JSON.parse(settingsJson || "{}");
+  } catch {
+    return {};
+  }
+};
+
+const updateSettingsJson = (settingsJson, updater) => {
+  const current = parseSettingsOrFallback(settingsJson);
+  const next = updater(current);
+  return prettyJson(next);
+};
+
 export default function AdminHomepageSectionsPage() {
   const [sections, setSections] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -72,6 +86,10 @@ export default function AdminHomepageSectionsPage() {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editorMode, setEditorMode] = useState("create");
   const [formData, setFormData] = useState(INITIAL_FORM_STATE);
+  const [saveErrorMessage, setSaveErrorMessage] = useState("");
+
+  const heroImageInputRef = useRef(null);
+  const campaignImageInputRef = useRef(null);
 
   const fetchSections = async () => {
     try {
@@ -98,6 +116,7 @@ export default function AdminHomepageSectionsPage() {
   const openCreateEditor = () => {
     setEditorMode("create");
     setFormData(INITIAL_FORM_STATE);
+    setSaveErrorMessage("");
     setIsEditorOpen(true);
   };
 
@@ -111,7 +130,65 @@ export default function AdminHomepageSectionsPage() {
       order: String(section.order ?? ""),
       settingsJson: prettyJson(section.settings || SECTION_DEFAULT_SETTINGS[section.type] || {}),
     });
+    setSaveErrorMessage("");
     setIsEditorOpen(true);
+  };
+
+  const convertFileToDataUrl = (file) => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error("Failed to read image file"));
+    reader.readAsDataURL(file);
+  });
+
+  const handleImagePick = async (event, sectionType) => {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select a valid image file");
+      event.target.value = "";
+      return;
+    }
+
+    try {
+      const dataUrl = await convertFileToDataUrl(file);
+
+      setFormData((prev) => ({
+        ...prev,
+        settingsJson: updateSettingsJson(prev.settingsJson, (current) => {
+          if (sectionType === "hero_banner") {
+            return {
+              ...current,
+              banners: [
+                {
+                  ...(current?.banners?.[0] || {}),
+                  image: dataUrl,
+                },
+                ...(Array.isArray(current?.banners) ? current.banners.slice(1) : []),
+              ],
+            };
+          }
+
+          return {
+            ...current,
+            campaigns: [
+              {
+                ...(current?.campaigns?.[0] || {}),
+                image: dataUrl,
+              },
+              ...(Array.isArray(current?.campaigns) ? current.campaigns.slice(1) : []),
+            ],
+          };
+        }),
+      }));
+
+      toast.success("Image selected. Click Save Section to persist.");
+    } catch (error) {
+      toast.error(error.message || "Failed to process image");
+    } finally {
+      event.target.value = "";
+    }
   };
 
   const handleTypeChange = (nextType) => {
@@ -126,9 +203,11 @@ export default function AdminHomepageSectionsPage() {
   };
 
   const saveSection = async () => {
+    setSaveErrorMessage("");
     const title = formData.title.trim();
 
     if (!title) {
+      setSaveErrorMessage("Title is required.");
       toast.error("Title is required");
       return;
     }
@@ -137,6 +216,7 @@ export default function AdminHomepageSectionsPage() {
     try {
       parsedSettings = parseSettingsOrThrow(formData.settingsJson);
     } catch (error) {
+      setSaveErrorMessage(error.message);
       toast.error(error.message);
       return;
     }
@@ -166,7 +246,9 @@ export default function AdminHomepageSectionsPage() {
       setIsEditorOpen(false);
       fetchSections();
     } catch (error) {
-      toast.error(error?.response?.data?.message || "Failed to save section");
+      const backendMessage = error?.response?.data?.message || "Failed to save section";
+      setSaveErrorMessage(backendMessage);
+      toast.error(backendMessage);
     } finally {
       setPendingId("");
     }
@@ -195,7 +277,7 @@ export default function AdminHomepageSectionsPage() {
     try {
       setPendingId(sectionId);
       await api.patch(`/homepage/admin/sections/${sectionId}`, {
-        status: section.status === "active" ? "inactive" : "active",
+        status: section.status === "active" ? "hidden" : "active",
       });
       toast.success("Section status updated");
       fetchSections();
@@ -290,6 +372,54 @@ export default function AdminHomepageSectionsPage() {
       return matchesType && matchesSearch;
     });
   }, [sections, searchTerm, typeFilter]);
+
+  const settingsValidationMessage = useMemo(() => {
+    try {
+      parseSettingsOrThrow(formData.settingsJson);
+      return "";
+    } catch (error) {
+      return error.message;
+    }
+  }, [formData.settingsJson]);
+
+  const quickSettings = useMemo(() => {
+    const parsed = parseSettingsOrFallback(formData.settingsJson);
+
+    if (formData.type === "hero_banner") {
+      const firstBanner = parsed?.banners?.[0] || {};
+      return {
+        image: firstBanner.image || "",
+        title: firstBanner.title || "",
+        subtitle: firstBanner.subtitle || "",
+        buttonText: firstBanner.buttonText || "",
+        link: firstBanner.link || "",
+      };
+    }
+
+    if (formData.type === "category_grid") {
+      return {
+        limit: String(parsed?.limit ?? 8),
+      };
+    }
+
+    if (formData.type === "product_grid") {
+      return {
+        source: parsed?.source || "new_arrival",
+        limit: String(parsed?.limit ?? 8),
+        productIds: Array.isArray(parsed?.productIds) ? parsed.productIds.join(",") : "",
+      };
+    }
+
+    if (formData.type === "campaign_banner") {
+      const firstCampaign = parsed?.campaigns?.[0] || {};
+      return {
+        image: firstCampaign.image || "",
+        link: firstCampaign.link || "",
+      };
+    }
+
+    return {};
+  }, [formData.settingsJson, formData.type]);
 
   return (
     <div className="min-h-screen w-full bg-slate-50 p-4 md:p-8">
@@ -462,7 +592,7 @@ export default function AdminHomepageSectionsPage() {
                   className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500"
                 >
                   <option value="active">active</option>
-                  <option value="inactive">inactive</option>
+                  <option value="hidden">hidden</option>
                 </select>
               </div>
 
@@ -479,6 +609,261 @@ export default function AdminHomepageSectionsPage() {
             </div>
 
             <div className="mt-4">
+              <label className="mb-2 block text-sm font-medium text-slate-700">Quick Settings</label>
+
+              {formData.type === "hero_banner" && (
+                <div className="grid gap-3 rounded-md border border-slate-200 bg-slate-50 p-3 md:grid-cols-2">
+                  <input
+                    ref={heroImageInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={(event) => handleImagePick(event, "hero_banner")}
+                    className="hidden"
+                  />
+                  <input
+                    value={quickSettings.image}
+                    onChange={(event) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        settingsJson: updateSettingsJson(prev.settingsJson, (current) => ({
+                          ...current,
+                          banners: [
+                            {
+                              ...(current?.banners?.[0] || {}),
+                              image: event.target.value,
+                            },
+                            ...(Array.isArray(current?.banners) ? current.banners.slice(1) : []),
+                          ],
+                        })),
+                      }))
+                    }
+                    placeholder="Banner image URL"
+                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => heroImageInputRef.current?.click()}
+                    className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 hover:bg-slate-100"
+                  >
+                    Upload Banner Image
+                  </button>
+                  <input
+                    value={quickSettings.link}
+                    onChange={(event) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        settingsJson: updateSettingsJson(prev.settingsJson, (current) => ({
+                          ...current,
+                          banners: [
+                            {
+                              ...(current?.banners?.[0] || {}),
+                              link: event.target.value,
+                            },
+                            ...(Array.isArray(current?.banners) ? current.banners.slice(1) : []),
+                          ],
+                        })),
+                      }))
+                    }
+                    placeholder="Button link"
+                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                  />
+                  <input
+                    value={quickSettings.title}
+                    onChange={(event) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        settingsJson: updateSettingsJson(prev.settingsJson, (current) => ({
+                          ...current,
+                          banners: [
+                            {
+                              ...(current?.banners?.[0] || {}),
+                              title: event.target.value,
+                            },
+                            ...(Array.isArray(current?.banners) ? current.banners.slice(1) : []),
+                          ],
+                        })),
+                      }))
+                    }
+                    placeholder="Banner title"
+                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                  />
+                  <input
+                    value={quickSettings.subtitle}
+                    onChange={(event) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        settingsJson: updateSettingsJson(prev.settingsJson, (current) => ({
+                          ...current,
+                          banners: [
+                            {
+                              ...(current?.banners?.[0] || {}),
+                              subtitle: event.target.value,
+                            },
+                            ...(Array.isArray(current?.banners) ? current.banners.slice(1) : []),
+                          ],
+                        })),
+                      }))
+                    }
+                    placeholder="Banner subtitle"
+                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                  />
+                  <input
+                    value={quickSettings.buttonText}
+                    onChange={(event) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        settingsJson: updateSettingsJson(prev.settingsJson, (current) => ({
+                          ...current,
+                          banners: [
+                            {
+                              ...(current?.banners?.[0] || {}),
+                              buttonText: event.target.value,
+                            },
+                            ...(Array.isArray(current?.banners) ? current.banners.slice(1) : []),
+                          ],
+                        })),
+                      }))
+                    }
+                    placeholder="Button text"
+                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm md:col-span-2"
+                  />
+                </div>
+              )}
+
+              {formData.type === "category_grid" && (
+                <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
+                  <input
+                    type="number"
+                    min={1}
+                    value={quickSettings.limit}
+                    onChange={(event) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        settingsJson: updateSettingsJson(prev.settingsJson, (current) => ({
+                          ...current,
+                          limit: Number(event.target.value || 0),
+                        })),
+                      }))
+                    }
+                    placeholder="Category limit"
+                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                  />
+                </div>
+              )}
+
+              {formData.type === "product_grid" && (
+                <div className="grid gap-3 rounded-md border border-slate-200 bg-slate-50 p-3 md:grid-cols-2">
+                  <input
+                    value={quickSettings.source}
+                    onChange={(event) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        settingsJson: updateSettingsJson(prev.settingsJson, (current) => ({
+                          ...current,
+                          source: event.target.value,
+                        })),
+                      }))
+                    }
+                    placeholder="Source (new_arrival, featured, etc)"
+                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                  />
+                  <input
+                    type="number"
+                    min={1}
+                    value={quickSettings.limit}
+                    onChange={(event) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        settingsJson: updateSettingsJson(prev.settingsJson, (current) => ({
+                          ...current,
+                          limit: Number(event.target.value || 0),
+                        })),
+                      }))
+                    }
+                    placeholder="Product limit"
+                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                  />
+                  <input
+                    value={quickSettings.productIds}
+                    onChange={(event) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        settingsJson: updateSettingsJson(prev.settingsJson, (current) => ({
+                          ...current,
+                          productIds: event.target.value
+                            .split(",")
+                            .map((item) => item.trim())
+                            .filter(Boolean),
+                        })),
+                      }))
+                    }
+                    placeholder="Product IDs (comma separated)"
+                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm md:col-span-2"
+                  />
+                </div>
+              )}
+
+              {formData.type === "campaign_banner" && (
+                <div className="grid gap-3 rounded-md border border-slate-200 bg-slate-50 p-3 md:grid-cols-2">
+                  <input
+                    ref={campaignImageInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={(event) => handleImagePick(event, "campaign_banner")}
+                    className="hidden"
+                  />
+                  <input
+                    value={quickSettings.image}
+                    onChange={(event) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        settingsJson: updateSettingsJson(prev.settingsJson, (current) => ({
+                          ...current,
+                          campaigns: [
+                            {
+                              ...(current?.campaigns?.[0] || {}),
+                              image: event.target.value,
+                            },
+                            ...(Array.isArray(current?.campaigns) ? current.campaigns.slice(1) : []),
+                          ],
+                        })),
+                      }))
+                    }
+                    placeholder="Campaign image URL"
+                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => campaignImageInputRef.current?.click()}
+                    className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 hover:bg-slate-100"
+                  >
+                    Upload Campaign Image
+                  </button>
+                  <input
+                    value={quickSettings.link}
+                    onChange={(event) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        settingsJson: updateSettingsJson(prev.settingsJson, (current) => ({
+                          ...current,
+                          campaigns: [
+                            {
+                              ...(current?.campaigns?.[0] || {}),
+                              link: event.target.value,
+                            },
+                            ...(Array.isArray(current?.campaigns) ? current.campaigns.slice(1) : []),
+                          ],
+                        })),
+                      }))
+                    }
+                    placeholder="Campaign link"
+                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="mt-4">
               <label className="mb-1 block text-sm font-medium text-slate-700">Settings (JSON)</label>
               <textarea
                 value={formData.settingsJson}
@@ -486,8 +871,18 @@ export default function AdminHomepageSectionsPage() {
                 rows={14}
                 className="w-full rounded-md border border-slate-300 px-3 py-2 font-mono text-xs focus:border-slate-500"
               />
-              <p className="mt-2 text-xs text-slate-500">Tip: Settings shape is validated by backend. Keep valid JSON and required fields per section type.</p>
+              {settingsValidationMessage ? (
+                <p className="mt-2 text-xs font-medium text-red-600">{settingsValidationMessage}</p>
+              ) : (
+                <p className="mt-2 text-xs text-slate-500">Tip: Settings shape is validated by backend. Keep valid JSON and required fields per section type.</p>
+              )}
             </div>
+
+            {(saveErrorMessage || settingsValidationMessage) && (
+              <div className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                {saveErrorMessage || settingsValidationMessage}
+              </div>
+            )}
 
             <div className="mt-5 flex items-center justify-end gap-2">
               <button
@@ -498,7 +893,7 @@ export default function AdminHomepageSectionsPage() {
               </button>
               <button
                 onClick={saveSection}
-                disabled={pendingId === "new" || pendingId === formData.sectionId}
+                disabled={pendingId === "new" || pendingId === formData.sectionId || Boolean(settingsValidationMessage)}
                 className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-60"
               >
                 {pendingId === "new" || pendingId === formData.sectionId ? "Saving..." : "Save Section"}
