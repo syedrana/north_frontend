@@ -36,17 +36,54 @@ export function useHomepageSections(options = {}) {
     fetchSections();
   }, [autoFetch, fetchSections]);
 
+  const buildSectionRequestPayload = useCallback((payload = {}) => {
+    const { uploads, ...restPayload } = payload;
+    const hasHeroImage = Boolean(uploads?.heroImage);
+    const hasCampaignImage = Boolean(uploads?.campaignImage);
+
+    if (!hasHeroImage && !hasCampaignImage) {
+      return restPayload;
+    }
+
+    const formData = new FormData();
+
+    Object.entries(restPayload).forEach(([key, value]) => {
+      if (value === undefined || value === null || value === "") {
+        return;
+      }
+
+      if (key === "settings") {
+        formData.append("settings", JSON.stringify(value));
+        return;
+      }
+
+      formData.append(key, String(value));
+    });
+
+    if (hasHeroImage) {
+      formData.append("heroImages", uploads.heroImage);
+    }
+
+    if (hasCampaignImage) {
+      formData.append("campaignImages", uploads.campaignImage);
+    }
+
+    return formData;
+  }, []);
+
   const saveSection = useCallback(
     async ({ mode, sectionId, payload }) => {
       try {
         const pendingTargetId = mode === "create" ? "new" : sectionId;
         setPendingId(pendingTargetId);
 
+        const requestPayload = buildSectionRequestPayload(payload);
+
         if (mode === "create") {
-          await api.post("/homepage/admin/sections", payload);
+          await api.post("/homepage/admin/sections", requestPayload);
           toast.success("Homepage section created");
         } else {
-          await api.patch(`/homepage/admin/sections/${sectionId}`, payload);
+          await api.patch(`/homepage/admin/sections/${sectionId}`, requestPayload);
           toast.success("Homepage section updated");
         }
 
@@ -57,7 +94,7 @@ export function useHomepageSections(options = {}) {
         setPendingId("");
       }
     },
-    [fetchSections]
+    [buildSectionRequestPayload, fetchSections]
   );
 
   const deleteSection = useCallback(

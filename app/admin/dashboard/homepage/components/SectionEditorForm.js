@@ -1,12 +1,11 @@
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { SECTION_DEFAULT_SETTINGS, SECTION_TYPES } from "../constants";
 import {
-    convertFileToDataUrl,
-    parseSettingsOrFallback,
-    parseSettingsOrThrow,
-    prettyJson,
-    updateSettingsJson,
+  parseSettingsOrFallback,
+  parseSettingsOrThrow,
+  prettyJson,
+  updateSettingsJson,
 } from "../utils";
 import QuickSettingsForm from "./QuickSettingsForm";
 import SettingsJsonEditor from "./SettingsJsonEditor";
@@ -23,6 +22,26 @@ export default function SectionEditorForm({
 }) {
   const heroImageInputRef = useRef(null);
   const campaignImageInputRef = useRef(null);
+  const [selectedUploads, setSelectedUploads] = useState({
+    heroImage: null,
+    campaignImage: null,
+  });
+  const [previewUrls, setPreviewUrls] = useState({
+    heroImage: "",
+    campaignImage: "",
+  });
+
+  useEffect(() => {
+    return () => {
+      if (previewUrls.heroImage) {
+        URL.revokeObjectURL(previewUrls.heroImage);
+      }
+
+      if (previewUrls.campaignImage) {
+        URL.revokeObjectURL(previewUrls.campaignImage);
+      }
+    };
+  }, [previewUrls]);
 
   const settingsValidationMessage = useMemo(() => {
     try {
@@ -71,12 +90,29 @@ export default function SectionEditorForm({
     return {};
   }, [formData.settingsJson, formData.type]);
 
+  const resetUploadState = () => {
+    if (previewUrls.heroImage) {
+      URL.revokeObjectURL(previewUrls.heroImage);
+    }
+
+    if (previewUrls.campaignImage) {
+      URL.revokeObjectURL(previewUrls.campaignImage);
+    }
+
+    setSelectedUploads({ heroImage: null, campaignImage: null });
+    setPreviewUrls({ heroImage: "", campaignImage: "" });
+  };
+
   const handleTypeChange = (nextType) => {
     setFormData((previous) => ({
       ...previous,
       type: nextType,
-      settingsJson: mode === "create" ? prettyJson(SECTION_DEFAULT_SETTINGS[nextType] || {}) : previous.settingsJson,
+      settingsJson:
+        mode === "create"
+          ? prettyJson(SECTION_DEFAULT_SETTINGS[nextType] || {})
+          : previous.settingsJson,
     }));
+    resetUploadState(); //setSelectedUploads({ heroImage: null, campaignImage: null });
   };
 
   const handleImagePick = async (event, sectionType) => {
@@ -91,19 +127,49 @@ export default function SectionEditorForm({
 
     try {
       const dataUrl = await convertFileToDataUrl(file);
+      const previewUrl = URL.createObjectURL(file);
+
+      setSelectedUploads((prev) => ({
+        ...prev,
+        heroImage: sectionType === "hero_banner" ? file : prev.heroImage,
+        campaignImage: sectionType === "campaign_banner" ? file : prev.campaignImage,
+      }));
+
+      setPreviewUrls((prev) => {
+        const next = { ...prev };
+
+        if (sectionType === "hero_banner") {
+          if (prev.heroImage) URL.revokeObjectURL(prev.heroImage);
+          next.heroImage = previewUrl;
+        }
+
+        if (sectionType === "campaign_banner") {
+          if (prev.campaignImage) URL.revokeObjectURL(prev.campaignImage);
+          next.campaignImage = previewUrl;
+        }
+
+        return next;
+      });
+
       setFormData((prev) => ({
         ...prev,
         settingsJson: updateSettingsJson(prev.settingsJson, (current) => {
           if (sectionType === "hero_banner") {
             return {
               ...current,
-              banners: [{ ...(current?.banners?.[0] || {}), image: dataUrl }, ...(Array.isArray(current?.banners) ? current.banners.slice(1) : [])],
+               banners: [
+                { ...(current?.banners?.[0] || {}), image: previewUrl },
+                ...(Array.isArray(current?.banners) ? current.banners.slice(1) : []),
+              ],
             };
           }
 
           return {
             ...current,
-            campaigns: [{ ...(current?.campaigns?.[0] || {}), image: dataUrl }, ...(Array.isArray(current?.campaigns) ? current.campaigns.slice(1) : [])],
+            campaigns: [
+              { ...(current?.campaigns?.[0] || {}), image: previewUrl },
+              ...(Array.isArray(current?.campaigns) ? current.campaigns.slice(1) : []),
+            ],
           };
         }),
       }));
@@ -178,6 +244,10 @@ export default function SectionEditorForm({
       type: formData.type,
       status: formData.status,
       settings: parsedSettings,
+      uploads: {
+        heroImage: selectedUploads.heroImage,
+        campaignImage: selectedUploads.campaignImage,
+      },
     };
 
     if (formData.order !== "") {
