@@ -26,6 +26,7 @@ export default function SectionEditorForm({
     heroImages: {},
     campaignImage: null,
   });
+  const [heroImageTargetIndex, setHeroImageTargetIndex] = useState(0);
   const [previewUrls, setPreviewUrls] = useState({
     heroImages: {},
     campaignImage: "",
