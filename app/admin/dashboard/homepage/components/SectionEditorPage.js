@@ -1,0 +1,303 @@
+"use client";
+
+import api from "@/lib/api";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
+import toast from "react-hot-toast";
+import { INITIAL_FORM_STATE, SECTION_DEFAULT_SETTINGS, SECTION_TYPES } from "../constants";
+import { convertFileToDataUrl, parseSettingsOrFallback, parseSettingsOrThrow, prettyJson, updateSettingsJson } from "../utils";
+import QuickSettingsForm from "./QuickSettingsForm";
+import SettingsJsonEditor from "./SettingsJsonEditor";
+
+export default function SectionEditorPage({ mode, sectionId }) {
+  const router = useRouter();
+  const heroImageInputRef = useRef(null);
+  const campaignImageInputRef = useRef(null);
+
+  const [formData, setFormData] = useState(INITIAL_FORM_STATE);
+  const [loadingSection, setLoadingSection] = useState(mode === "edit");
+  const [pendingSave, setPendingSave] = useState(false);
+  const [saveErrorMessage, setSaveErrorMessage] = useState("");
+
+  useEffect(() => {
+    const loadSection = async () => {
+      if (mode !== "edit" || !sectionId) return;
+
+      try {
+        setLoadingSection(true);
+        const response = await api.get(`/homepage/admin/sections/${sectionId}`);
+        const section = response?.data?.section;
+
+        if (!section) {
+          throw new Error("Homepage section not found");
+        }
+
+        setFormData({
+          sectionId: section._id,
+          title: section.title || "",
+          type: section.type || "hero_banner",
+          status: section.status || "active",
+          order: String(section.order ?? ""),
+          settingsJson: prettyJson(section.settings || SECTION_DEFAULT_SETTINGS[section.type] || {}),
+        });
+      } catch (error) {
+        toast.error(error?.response?.data?.message || error?.message || "Failed to load section");
+        router.push("/admin/dashboard/homepage");
+      } finally {
+        setLoadingSection(false);
+      }
+    };
+
+    loadSection();
+  }, [mode, router, sectionId]);
+
+  const settingsValidationMessage = useMemo(() => {
+    try {
+      parseSettingsOrThrow(formData.settingsJson);
+      return "";
+    } catch (error) {
+      return error.message;
+    }
+  }, [formData.settingsJson]);
+
+  const quickSettings = useMemo(() => {
+    const parsed = parseSettingsOrFallback(formData.settingsJson);
+
+    if (formData.type === "hero_banner") {
+      const firstBanner = parsed?.banners?.[0] || {};
+      return {
+        image: firstBanner.image || "",
+        title: firstBanner.title || "",
+        subtitle: firstBanner.subtitle || "",
+        buttonText: firstBanner.buttonText || "",
+        link: firstBanner.link || "",
+      };
+    }
+
+    if (formData.type === "category_grid") {
+      return { limit: String(parsed?.limit ?? 8) };
+    }
+
+    if (formData.type === "product_grid") {
+      return {
+        source: parsed?.source || "new_arrival",
+        limit: String(parsed?.limit ?? 8),
+        productIds: Array.isArray(parsed?.productIds) ? parsed.productIds.join(",") : "",
+        categoryId: parsed?.categoryId || "",
+      };
+    }
+
+    if (formData.type === "campaign_banner") {
+      const firstCampaign = parsed?.campaigns?.[0] || {};
+      return {
+        image: firstCampaign.image || "",
+        link: firstCampaign.link || "",
+      };
+    }
+
+    return {};
+  }, [formData.settingsJson, formData.type]);
+
+  const handleTypeChange = (nextType) => {
+    setFormData((previous) => ({
+      ...previous,
+      type: nextType,
+      settingsJson: mode === "create" ? prettyJson(SECTION_DEFAULT_SETTINGS[nextType] || {}) : previous.settingsJson,
+    }));
+  };
+
+  const handleImagePick = async (event, sectionType) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select a valid image file");
+      event.target.value = "";
+      return;
+    }
+
+    try {
+      const dataUrl = await convertFileToDataUrl(file);
+
+      setFormData((prev) => ({
+        ...prev,
+        settingsJson: updateSettingsJson(prev.settingsJson, (current) => {
+          if (sectionType === "hero_banner") {
+            return {
+              ...current,
+              banners: [{ ...(current?.banners?.[0] || {}), image: dataUrl }, ...(Array.isArray(current?.banners) ? current.banners.slice(1) : [])],
+            };
+          }
+
+          return {
+            ...current,
+            campaigns: [{ ...(current?.campaigns?.[0] || {}), image: dataUrl }, ...(Array.isArray(current?.campaigns) ? current.campaigns.slice(1) : [])],
+          };
+        }),
+      }));
+      toast.success("Image selected. Click Save Section to persist.");
+    } catch (error) {
+      toast.error(error.message || "Failed to process image");
+    } finally {
+      event.target.value = "";
+    }
+  };
+
+  const handleQuickSettingsChange = (field, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      settingsJson: updateSettingsJson(prev.settingsJson, (current) => {
+        if (prev.type === "hero_banner") {
+          return {
+            ...current,
+            banners: [{ ...(current?.banners?.[0] || {}), [field]: value }, ...(Array.isArray(current?.banners) ? current.banners.slice(1) : [])],
+          };
+        }
+
+        if (prev.type === "campaign_banner") {
+          return {
+            ...current,
+            campaigns: [{ ...(current?.campaigns?.[0] || {}), [field]: value }, ...(Array.isArray(current?.campaigns) ? current.campaigns.slice(1) : [])],
+          };
+        }
+
+        if (prev.type === "product_grid") {
+          if (field === "productIds") {
+            return {
+              ...current,
+              productIds: value
+                .split(",")
+                .map((item) => item.trim())
+                .filter(Boolean),
+            };
+          }
+
+          if (field === "categoryId") {
+            return { ...current, categoryId: value };
+          }
+        }
+
+        return { ...current, [field]: value };
+      }),
+    }));
+  };
+
+  const handleSave = async () => {
+    setSaveErrorMessage("");
+    const title = formData.title.trim();
+
+    if (!title) {
+      setSaveErrorMessage("Title is required.");
+      toast.error("Title is required");
+      return;
+    }
+
+    let parsedSettings;
+    try {
+      parsedSettings = parseSettingsOrThrow(formData.settingsJson);
+    } catch (error) {
+      setSaveErrorMessage(error.message);
+      toast.error(error.message);
+      return;
+    }
+
+    const payload = {
+      title,
+      type: formData.type,
+      status: formData.status,
+      settings: parsedSettings,
+    };
+
+    if (formData.order !== "") {
+      payload.order = Number(formData.order);
+    }
+
+    try {
+      setPendingSave(true);
+      if (mode === "create") {
+        await api.post("/homepage/admin/sections", payload);
+        toast.success("Homepage section created");
+      } else {
+        await api.patch(`/homepage/admin/sections/${sectionId}`, payload);
+        toast.success("Homepage section updated");
+      }
+
+      router.push("/admin/dashboard/homepage");
+    } catch (error) {
+      const message = error?.response?.data?.message || "Failed to save section";
+      setSaveErrorMessage(message);
+      toast.error(message);
+    } finally {
+      setPendingSave(false);
+    }
+  };
+
+  if (loadingSection) {
+    return <div className="p-6 text-sm text-slate-600">Loading section...</div>;
+  }
+
+  return (
+    <div className="min-h-screen w-full bg-slate-50 p-4 md:p-8">
+      <div className="mx-auto w-full max-w-5xl rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+        <div className="mb-6 flex items-center justify-between">
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">{mode === "create" ? "Create Homepage Section" : "Edit Homepage Section"}</h1>
+          <button onClick={() => router.push("/admin/dashboard/homepage")} className="rounded border border-slate-200 px-3 py-1 text-sm hover:bg-slate-50">Back</button>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <div>
+            <label className="mb-1 block text-sm font-medium text-slate-700">Title</label>
+            <input value={formData.title} onChange={(event) => setFormData((prev) => ({ ...prev, title: event.target.value }))} placeholder="e.g. Featured Products" className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500" />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-slate-700">Type</label>
+            <select value={formData.type} onChange={(event) => handleTypeChange(event.target.value)} disabled={mode === "edit"} className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 disabled:bg-slate-100">
+              {SECTION_TYPES.map((item) => (
+                <option key={item.value} value={item.value}>{item.label}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-slate-700">Status</label>
+            <select value={formData.status} onChange={(event) => setFormData((prev) => ({ ...prev, status: event.target.value }))} className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500">
+              <option value="active">active</option>
+              <option value="hidden">hidden</option>
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-slate-700">Order (optional)</label>
+            <input value={formData.order} onChange={(event) => setFormData((prev) => ({ ...prev, order: event.target.value }))} placeholder="e.g. 1" type="number" className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500" />
+          </div>
+        </div>
+
+        <div className="mt-4">
+          <label className="mb-2 block text-sm font-medium text-slate-700">Quick Settings</label>
+          <input ref={heroImageInputRef} type="file" accept="image/*" onChange={(event) => handleImagePick(event, "hero_banner")} className="hidden" />
+          <input ref={campaignImageInputRef} type="file" accept="image/*" onChange={(event) => handleImagePick(event, "campaign_banner")} className="hidden" />
+          <QuickSettingsForm
+            type={formData.type}
+            values={quickSettings}
+            onChange={handleQuickSettingsChange}
+            onOpenHeroImagePicker={() => heroImageInputRef.current?.click()}
+            onOpenCampaignImagePicker={() => campaignImageInputRef.current?.click()}
+          />
+        </div>
+
+        <SettingsJsonEditor value={formData.settingsJson} onChange={(settingsJson) => setFormData((prev) => ({ ...prev, settingsJson }))} validationMessage={settingsValidationMessage} />
+
+        {(saveErrorMessage || settingsValidationMessage) && (
+          <div className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+            {saveErrorMessage || settingsValidationMessage}
+          </div>
+        )}
+
+        <div className="mt-5 flex items-center justify-end gap-2">
+          <button onClick={() => router.push("/admin/dashboard/homepage")} className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Cancel</button>
+          <button onClick={handleSave} disabled={pendingSave || Boolean(settingsValidationMessage)} className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-60">
+            {pendingSave ? "Saving..." : "Save Section"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
