@@ -1,6 +1,6 @@
-import SectionEditorPage from "../../components/SectionEditorForm";
+import SectionEditorPage from "../../components/SectionEditorPage";
 
-export default async function EditHomepageSectionPage({ params }) {
+export default function EditHomepageSectionPage({ params }) {
   const { sectionId } = params;
   return <SectionEditorPage mode="edit" sectionId={sectionId} />;
 }
