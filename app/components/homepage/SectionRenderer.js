@@ -26,7 +26,7 @@ function CampaignBanner({ section }) {
 function renderSection(section, index) {
   switch (section?.type) {
     case "hero_banner":
-      return <HeroBanner key={section?._id || section?.id || index} data={section} />;
+       return <HeroBanner key={section?._id || section?.id || index} data={section?.settings || section} />;
     case "category_grid":
       return <section key={section?._id || section?.id || index}>
         {section?.title && <h2 className="mb-4 text-xl font-semibold">{section.title}</h2>}
@@ -35,7 +35,7 @@ function renderSection(section, index) {
     case "product_grid":
       return <ProductGrid key={section?._id || section?.id || index} title={section?.title} products={section?.items} />;
     case "campaign_banner":
-      return <CampaignBanner key={section?._id || section?.id || index} section={section} />;
+      return <CampaignBanner key={section?._id || section?.id || index} section={section?.settings || section} />;
       case "flash_sale":
       return (
         <FlashSale

@@ -38,7 +38,12 @@ export function useHomepageSections(options = {}) {
 
   const buildSectionRequestPayload = useCallback((payload = {}) => {
     const { uploads, ...restPayload } = payload;
-    const hasHeroImage = Boolean(uploads?.heroImage);
+    const heroImages = Array.isArray(uploads?.heroImages)
+      ? uploads.heroImages.filter(Boolean)
+      : uploads?.heroImage
+        ? [uploads.heroImage]
+        : [];
+    const hasHeroImage = heroImages.length > 0;
     const hasCampaignImage = Boolean(uploads?.campaignImage);
 
     if (!hasHeroImage && !hasCampaignImage) {
@@ -61,7 +66,9 @@ export function useHomepageSections(options = {}) {
     });
 
     if (hasHeroImage) {
-      formData.append("heroImages", uploads.heroImage);
+      heroImages.forEach((file) => {
+        formData.append("heroImages", file);
+      });
     }
 
     if (hasCampaignImage) {

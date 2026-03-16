@@ -23,19 +23,19 @@ export default function SectionEditorForm({
   const heroImageInputRef = useRef(null);
   const campaignImageInputRef = useRef(null);
   const [selectedUploads, setSelectedUploads] = useState({
-    heroImage: null,
+    heroImages: {},
     campaignImage: null,
   });
   const [previewUrls, setPreviewUrls] = useState({
-    heroImage: "",
+    heroImages: {},
     campaignImage: "",
   });
 
   useEffect(() => {
     return () => {
-      if (previewUrls.heroImage) {
-        URL.revokeObjectURL(previewUrls.heroImage);
-      }
+      Object.values(previewUrls.heroImages || {}).forEach((url) => {
+        if (url) URL.revokeObjectURL(url);
+      });
 
       if (previewUrls.campaignImage) {
         URL.revokeObjectURL(previewUrls.campaignImage);
@@ -56,13 +56,10 @@ export default function SectionEditorForm({
     const parsed = parseSettingsOrFallback(formData.settingsJson);
 
     if (formData.type === "hero_banner") {
-      const firstBanner = parsed?.banners?.[0] || {};
       return {
-        image: firstBanner.image || "",
-        title: firstBanner.title || "",
-        subtitle: firstBanner.subtitle || "",
-        buttonText: firstBanner.buttonText || "",
-        link: firstBanner.link || "",
+        banners: Array.isArray(parsed?.banners) && parsed.banners.length > 0
+          ? parsed.banners
+          : [SECTION_DEFAULT_SETTINGS.hero_banner.banners[0]],
       };
     }
 
@@ -91,16 +88,17 @@ export default function SectionEditorForm({
   }, [formData.settingsJson, formData.type]);
 
   const resetUploadState = () => {
-    if (previewUrls.heroImage) {
-      URL.revokeObjectURL(previewUrls.heroImage);
-    }
+    Object.values(previewUrls.heroImages || {}).forEach((url) => {
+      if (url) URL.revokeObjectURL(url);
+    });
 
     if (previewUrls.campaignImage) {
       URL.revokeObjectURL(previewUrls.campaignImage);
     }
 
-    setSelectedUploads({ heroImage: null, campaignImage: null });
-    setPreviewUrls({ heroImage: "", campaignImage: "" });
+    setSelectedUploads({ heroImages: {}, campaignImage: null });
+    setPreviewUrls({ heroImages: {}, campaignImage: "" });
+    setHeroImageTargetIndex(0);
   };
 
   const handleTypeChange = (nextType) => {
@@ -126,12 +124,14 @@ export default function SectionEditorForm({
     }
 
     try {
-      const dataUrl = await convertFileToDataUrl(file);
       const previewUrl = URL.createObjectURL(file);
 
       setSelectedUploads((prev) => ({
         ...prev,
-        heroImage: sectionType === "hero_banner" ? file : prev.heroImage,
+        heroImages:
+          sectionType === "hero_banner"
+            ? { ...prev.heroImages, [heroImageTargetIndex]: file }
+            : prev.heroImages,
         campaignImage: sectionType === "campaign_banner" ? file : prev.campaignImage,
       }));
 
@@ -139,8 +139,15 @@ export default function SectionEditorForm({
         const next = { ...prev };
 
         if (sectionType === "hero_banner") {
-          if (prev.heroImage) URL.revokeObjectURL(prev.heroImage);
-          next.heroImage = previewUrl;
+           const existingUrl = prev.heroImages?.[heroImageTargetIndex];
+          if (existingUrl) {
+            URL.revokeObjectURL(existingUrl);
+          }
+
+          next.heroImages = {
+            ...prev.heroImages,
+            [heroImageTargetIndex]: previewUrl,
+          };
         }
 
         if (sectionType === "campaign_banner") {
@@ -155,12 +162,16 @@ export default function SectionEditorForm({
         ...prev,
         settingsJson: updateSettingsJson(prev.settingsJson, (current) => {
           if (sectionType === "hero_banner") {
+            const currentBanners = Array.isArray(current?.banners) && current.banners.length > 0
+              ? current.banners
+              : [SECTION_DEFAULT_SETTINGS.hero_banner.banners[0]];
             return {
               ...current,
-               banners: [
-                { ...(current?.banners?.[0] || {}), image: previewUrl },
-                ...(Array.isArray(current?.banners) ? current.banners.slice(1) : []),
-              ],
+               banners: currentBanners.map((banner, index) =>
+                index === heroImageTargetIndex
+                  ? { ...banner, image: previewUrl }
+                  : banner
+              ),
             };
           }
 
@@ -186,9 +197,23 @@ export default function SectionEditorForm({
       ...prev,
       settingsJson: updateSettingsJson(prev.settingsJson, (current) => {
         if (prev.type === "hero_banner") {
+          const currentBanners = Array.isArray(current?.banners) && current.banners.length > 0
+            ? current.banners
+            : [SECTION_DEFAULT_SETTINGS.hero_banner.banners[0]];
+
+          if (typeof field === "object") {
+            const { index, key } = field;
+
+            return {
+              ...current,
+              banners: currentBanners.map((banner, bannerIndex) =>
+                bannerIndex === index ? { ...banner, [key]: value } : banner
+              ),
+            };
+          }
           return {
             ...current,
-            banners: [{ ...(current?.banners?.[0] || {}), [field]: value }, ...(Array.isArray(current?.banners) ? current.banners.slice(1) : [])],
+            banners: [{ ...(currentBanners[0] || {}), [field]: value }, ...currentBanners.slice(1)],
           };
         }
 
@@ -220,6 +245,77 @@ export default function SectionEditorForm({
     }));
   };
 
+  const handleAddHeroBanner = () => {
+    setFormData((prev) => ({
+      ...prev,
+      settingsJson: updateSettingsJson(prev.settingsJson, (current) => {
+        const currentBanners = Array.isArray(current?.banners) ? current.banners : [];
+        return {
+          ...current,
+          banners: [
+            ...currentBanners,
+            { ...SECTION_DEFAULT_SETTINGS.hero_banner.banners[0] },
+          ],
+        };
+      }),
+    }));
+  };
+
+  const handleRemoveHeroBanner = (removeIndex) => {
+    setFormData((prev) => ({
+      ...prev,
+      settingsJson: updateSettingsJson(prev.settingsJson, (current) => {
+        const currentBanners = Array.isArray(current?.banners) && current.banners.length > 0
+          ? current.banners
+          : [SECTION_DEFAULT_SETTINGS.hero_banner.banners[0]];
+
+        if (currentBanners.length <= 1) {
+          return current;
+        }
+
+        return {
+          ...current,
+          banners: currentBanners.filter((_, index) => index !== removeIndex),
+        };
+      }),
+    }));
+
+    setSelectedUploads((prev) => {
+      const nextHeroImages = {};
+      Object.entries(prev.heroImages || {}).forEach(([key, file]) => {
+        const index = Number(key);
+        if (index === removeIndex) return;
+        nextHeroImages[index > removeIndex ? index - 1 : index] = file;
+      });
+
+      return {
+        ...prev,
+        heroImages: nextHeroImages,
+      };
+    });
+
+    setPreviewUrls((prev) => {
+      const nextHeroImageUrls = {};
+      Object.entries(prev.heroImages || {}).forEach(([key, url]) => {
+        const index = Number(key);
+
+        if (index === removeIndex) {
+          if (url) URL.revokeObjectURL(url);
+          return;
+        }
+
+        nextHeroImageUrls[index > removeIndex ? index - 1 : index] = url;
+      });
+
+      return {
+        ...prev,
+        heroImages: nextHeroImageUrls,
+      };
+    });
+
+    setHeroImageTargetIndex((prev) => (prev > removeIndex ? prev - 1 : prev));
+  };
+
   const handleSave = async () => {
     setSaveErrorMessage("");
     const title = formData.title.trim();
@@ -245,7 +341,10 @@ export default function SectionEditorForm({
       status: formData.status,
       settings: parsedSettings,
       uploads: {
-        heroImage: selectedUploads.heroImage,
+        heroImages: Object.entries(selectedUploads.heroImages || {})
+          .sort(([a], [b]) => Number(a) - Number(b))
+          .map(([, file]) => file)
+          .filter(Boolean),
         campaignImage: selectedUploads.campaignImage,
       },
     };
@@ -318,9 +417,23 @@ export default function SectionEditorForm({
         <QuickSettingsForm
           type={formData.type}
           values={quickSettings}
-          onChange={handleQuickSettingsChange}
-          onOpenHeroImagePicker={() => heroImageInputRef.current?.click()}
+          onChange={(...args) => {
+            if (formData.type === "hero_banner") {
+              const [index, field, value] = args;
+              handleQuickSettingsChange({ index, key: field }, value);
+              return;
+            }
+
+            const [field, value] = args;
+            handleQuickSettingsChange(field, value);
+          }}
+          onOpenHeroImagePicker={(index = 0) => {
+            setHeroImageTargetIndex(index);
+            heroImageInputRef.current?.click();
+          }}
           onOpenCampaignImagePicker={() => campaignImageInputRef.current?.click()}
+          onAddHeroBanner={handleAddHeroBanner}
+          onRemoveHeroBanner={handleRemoveHeroBanner}
         />
       </div>
 
