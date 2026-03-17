@@ -1,6 +1,6 @@
 import SectionEditorPage from "../../components/SectionEditorPage";
 
-export default function EditHomepageSectionPage({ params }) {
-  const { sectionId } = params;
+export default async function EditHomepageSectionPage({ params }) {
+  const { sectionId } = await params;
   return <SectionEditorPage mode="edit" sectionId={sectionId} />;
 }

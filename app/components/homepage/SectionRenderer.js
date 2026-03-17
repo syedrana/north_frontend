@@ -35,7 +35,7 @@ function renderSection(section, index) {
     case "product_grid":
       return <ProductGrid key={section?._id || section?.id || index} title={section?.title} products={section?.items} />;
     case "campaign_banner":
-      return <CampaignBanner key={section?._id || section?.id || index} section={section?.settings || section} />;
+      return <CampaignBanner key={section?._id || section?.id || index} section={section} />;
       case "flash_sale":
       return (
         <FlashSale
