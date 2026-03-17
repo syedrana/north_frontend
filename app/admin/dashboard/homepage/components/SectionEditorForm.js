@@ -72,7 +72,7 @@ export default function SectionEditorForm({
       return {
         source: parsed?.source || "new_arrival",
         limit: String(parsed?.limit ?? 8),
-        productIds: Array.isArray(parsed?.productIds) ? parsed.productIds.join(",") : "",
+        productIds: Array.isArray(parsed?.productIds) ? parsed.productIds : [],
         categoryId: parsed?.categoryId || "",
       };
     }
@@ -227,12 +227,16 @@ export default function SectionEditorForm({
 
         if (prev.type === "product_grid") {
           if (field === "productIds") {
+            const nextProductIds = Array.isArray(value)
+              ? value.filter(Boolean)
+              : String(value || "")
+                  .split(",")
+                  .map((item) => item.trim())
+                  .filter(Boolean);
+
             return {
               ...current,
-              productIds: value
-                .split(",")
-                .map((item) => item.trim())
-                .filter(Boolean),
+              productIds: nextProductIds,
             };
           }
 
