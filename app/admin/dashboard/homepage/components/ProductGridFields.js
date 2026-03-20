@@ -1,4 +1,4 @@
-import api from "@/lib/api";
+import api from "@/lib/apiServer";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PRODUCT_GRID_SOURCES } from "../constants";
 

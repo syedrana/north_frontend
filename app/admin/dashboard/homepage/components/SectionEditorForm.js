@@ -348,8 +348,8 @@ export default function SectionEditorForm({
       uploads: {
         heroImages: Object.entries(selectedUploads.heroImages || {})
           .sort(([a], [b]) => Number(a) - Number(b))
-          .map(([, file]) => file)
-          .filter(Boolean),
+          .map(([index, file]) => ({ index: Number(index), file }))
+          .filter((item) => item.file),
         campaignImage: selectedUploads.campaignImage,
       },
     };
