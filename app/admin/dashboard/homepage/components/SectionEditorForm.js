@@ -85,6 +85,14 @@ export default function SectionEditorForm({
       };
     }
 
+    if (formData.type === "flash_sale") {
+      return {
+        mode: parsed?.mode || "active",
+        limit: String(parsed?.limit ?? 8),
+        flashSaleId: parsed?.flashSaleId || "",
+      };
+    }
+
     return {};
   }, [formData.settingsJson, formData.type]);
 
@@ -243,6 +251,10 @@ export default function SectionEditorForm({
           if (field === "categoryId") {
             return { ...current, categoryId: value };
           }
+        }
+
+        if (prev.type === "flash_sale" && field === "limit") {
+          return { ...current, limit: value === "" ? "" : Number(value) };
         }
 
         return { ...current, [field]: value };

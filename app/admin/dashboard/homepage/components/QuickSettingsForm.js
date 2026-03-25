@@ -1,5 +1,6 @@
 import CampaignBannerFields from "./CampaignBannerFields";
 import CategoryGridFields from "./CategoryGridFields";
+import FlashSaleFields from "./FlashSaleFields";
 import HeroBannerFields from "./HeroBannerFields";
 import ProductGridFields from "./ProductGridFields";
 
@@ -34,6 +35,10 @@ export default function QuickSettingsForm({
 
   if (type === "campaign_banner") {
     return <CampaignBannerFields values={values} onChange={onChange} onOpenFilePicker={onOpenCampaignImagePicker} />;
+  }
+
+  if (type === "flash_sale") {
+    return <FlashSaleFields values={values} onChange={onChange} />;
   }
 
   return null;

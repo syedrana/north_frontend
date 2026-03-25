@@ -22,6 +22,7 @@ export default function DashboardLayout({ children }) {
   const menuItems = useMemo(() => [
     { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
     { name: "Homepage", href: "/admin/dashboard/homepage", icon: ReceiptText },
+    { name: "Flash Sales", href: "/admin/dashboard/flash-sales", icon: ReceiptText },
     { 
       name: 'Product Management', 
       icon: ReceiptText,

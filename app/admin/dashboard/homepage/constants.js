@@ -3,6 +3,7 @@ export const SECTION_TYPES = [
   { value: "category_grid", label: "Category Grid" },
   { value: "product_grid", label: "Product Grid" },
   { value: "campaign_banner", label: "Campaign Banner" },
+  { value: "flash_sale", label: "Flash Sale" },
 ];
 
 export const PRODUCT_GRID_SOURCES = [
@@ -40,6 +41,11 @@ export const SECTION_DEFAULT_SETTINGS = {
         link: "",
       },
     ],
+  },
+  flash_sale: {
+    mode: "active",
+    limit: 8,
+    flashSaleId: "",
   },
 };
 
