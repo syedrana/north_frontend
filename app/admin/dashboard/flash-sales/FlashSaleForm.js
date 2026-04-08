@@ -13,7 +13,7 @@ const INITIAL_FORM = {
   discountType: "percentage",
   discountValue: "",
   status: "active",
-  productsText: "",
+  products: [],
 };
 
 export default function FlashSaleForm({ mode, flashSaleId }) {
@@ -22,8 +22,9 @@ export default function FlashSaleForm({ mode, flashSaleId }) {
   const [loading, setLoading] = useState(mode === "edit");
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const [productsPreview, setProductsPreview] = useState([]);
-  const [previewLoading, setPreviewLoading] = useState(false);
+  const [productQuery, setProductQuery] = useState("");
+  const [productsCatalog, setProductsCatalog] = useState([]);
+  const [catalogLoading, setCatalogLoading] = useState(false);
 
   useEffect(() => {
     if (mode !== "edit" || !flashSaleId) return;
@@ -52,9 +53,8 @@ export default function FlashSaleForm({ mode, flashSaleId }) {
             discountType: sale.discountType || "percentage",
             discountValue: String(sale.discountValue ?? ""),
             status: sale.status || "active",
-            productsText: productIds.join(",\n"),
+            products: productIds,
           });
-          setProductsPreview(Array.isArray(sale.products) ? sale.products : []);
         }
       } catch (error) {
         const message = error?.response?.data?.message || error?.message || "Failed to load flash sale";
@@ -74,54 +74,80 @@ export default function FlashSaleForm({ mode, flashSaleId }) {
     };
   }, [flashSaleId, mode, router]);
 
-  const productIds = useMemo(
-    () =>
-      formData.productsText
-        .split(/[\n,]/)
-        .map((value) => value.trim())
-        .filter(Boolean),
-    [formData.productsText]
-  );
+  const productIds = useMemo(() => (Array.isArray(formData.products) ? formData.products : []), [formData.products]);
 
   useEffect(() => {
     let cancelled = false;
 
-    const loadPreview = async () => {
-      if (productIds.length === 0) {
-        setProductsPreview([]);
-        return;
-      }
-
+    const loadProducts = async () => {
       try {
-        setPreviewLoading(true);
+        setCatalogLoading(true);
         const response = await api.get("/products/admin/products");
-        const products = Array.isArray(response?.data?.products) ? response.data.products : [];
-        const matched = productIds.map((id) => products.find((product) => product._id === id)).filter(Boolean);
-
+        
         if (!cancelled) {
-          setProductsPreview(matched);
+          setProductsCatalog(Array.isArray(response?.data?.products) ? response.data.products : []);
         }
       } catch {
         if (!cancelled) {
-          setProductsPreview([]);
+          setProductsCatalog([]);
         }
       } finally {
         if (!cancelled) {
-          setPreviewLoading(false);
+          setCatalogLoading(false);
         }
       }
     };
 
-    loadPreview();
+    loadProducts();
 
     return () => {
       cancelled = true;
     };
-  }, [productIds]);
+  }, []);
+
+  const filteredProducts = useMemo(() => {
+    const keyword = productQuery.trim().toLowerCase();
+    if (!keyword) {
+      return [];
+    }
+
+    return productsCatalog
+      .filter((product) => {
+        const name = String(product?.name || "").toLowerCase();
+        const id = String(product?._id || "").toLowerCase();
+        return name.includes(keyword) || id.includes(keyword);
+      })
+      .slice(0, 10);
+  }, [productQuery, productsCatalog]);
+
+  const productsPreview = useMemo(() => {
+    if (productIds.length === 0) {
+      return [];
+    }
+
+    return productIds.map((id) => productsCatalog.find((product) => product?._id === id)).filter(Boolean);
+  }, [productIds, productsCatalog]);
 
   const handleChange = (field, value) => {
     setErrorMessage("");
     setFormData((previous) => ({ ...previous, [field]: value }));
+  };
+
+  const addProduct = (product) => {
+    const productId = product?._id;
+    if (!productId || productIds.includes(productId)) {
+      return;
+    }
+
+    handleChange("products", [...productIds, productId]);
+    setProductQuery("");
+  };
+
+  const removeProduct = (productId) => {
+    handleChange(
+      "products",
+      productIds.filter((id) => id !== productId)
+    );
   };
 
   const handleSubmit = async (event) => {
@@ -249,14 +275,56 @@ export default function FlashSaleForm({ mode, flashSaleId }) {
 
           <div className="md:col-span-2">
             <label className="mb-1 block text-sm font-medium text-slate-700">Product IDs</label>
-            <textarea
-              rows={6}
-              value={formData.productsText}
-              onChange={(event) => handleChange("productsText", event.target.value)}
-              placeholder="One product id per line, or comma separated"
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500"
-            />
-            <p className="mt-1 text-xs text-slate-500">Use published active product IDs from Product Management.</p>
+            <div className="relative">
+              <input
+                value={productQuery}
+                onChange={(event) => setProductQuery(event.target.value)}
+                placeholder="Type product name or ID to add"
+                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500"
+              />
+
+              {productQuery.trim() && (
+                <div className="absolute z-20 mt-1 max-h-56 w-full overflow-y-auto rounded-md border border-slate-200 bg-white shadow-lg">
+                  {catalogLoading && <div className="px-3 py-2 text-xs text-slate-500">Loading...</div>}
+                  {!catalogLoading && filteredProducts.length === 0 && (
+                    <div className="px-3 py-2 text-xs text-slate-500">No products found</div>
+                  )}
+                  {!catalogLoading &&
+                    filteredProducts.map((product) => {
+                      const productId = product?._id;
+                      const alreadySelected = productIds.includes(productId);
+
+                      return (
+                        <button
+                          key={productId}
+                          type="button"
+                          onClick={() => addProduct(product)}
+                          disabled={alreadySelected}
+                          className="flex w-full items-center justify-between border-b border-slate-100 px-3 py-2 text-left text-sm last:border-0 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          <span className="truncate">{product?.name || "Unnamed product"}</span>
+                          <span className="ml-2 text-xs text-slate-500">{alreadySelected ? "Selected" : productId}</span>
+                        </button>
+                      );
+                    })}
+                </div>
+              )}
+            </div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {productIds.length === 0 && <span className="text-xs text-slate-500">No products selected</span>}
+              {productIds.map((productId) => (
+                <button
+                  key={productId}
+                  type="button"
+                  onClick={() => removeProduct(productId)}
+                  className="rounded-full border border-slate-300 bg-white px-3 py-1 text-xs text-slate-700 hover:bg-slate-100"
+                  title="Click to remove"
+                >
+                  {productId} ×
+                </button>
+              ))}
+            </div>
+            <p className="mt-1 text-xs text-slate-500">Search করে product select করুন। Click করলে remove হবে।</p>
           </div>
         </div>
 
@@ -266,7 +334,7 @@ export default function FlashSaleForm({ mode, flashSaleId }) {
               <h2 className="font-medium text-slate-900">Selected products preview</h2>
               <p className="text-xs text-slate-500">Matched {productsPreview.length} of {productIds.length} provided IDs.</p>
             </div>
-            {previewLoading && <span className="text-xs text-slate-500">Refreshing preview…</span>}
+            {catalogLoading && <span className="text-xs text-slate-500">Refreshing preview…</span>}
           </div>
 
           {productsPreview.length === 0 ? (
