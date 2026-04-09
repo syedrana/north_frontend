@@ -5,6 +5,8 @@ import HeroBannerFields from "./HeroBannerFields";
 import ProductGridFields from "./ProductGridFields";
 import TrendingProductsFields from "./TrendingProductsFields";
 
+const isTrendingType = (type) => type === "trending" || type === "trending_products";
+
 export default function QuickSettingsForm({
   type,
   values,
@@ -42,7 +44,7 @@ export default function QuickSettingsForm({
     return <FlashSaleFields values={values} onChange={onChange} />;
   }
 
-  if (type === "trending_products") {
+  if (isTrendingType(type)) {
     return <TrendingProductsFields values={values} onChange={onChange} />;
   }
 

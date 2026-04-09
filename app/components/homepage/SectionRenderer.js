@@ -47,6 +47,7 @@ function renderSection(section, index) {
           products={section?.items}
         />
       );
+    case "trending":
     case "trending_products":
       return (
         <TrendingProducts

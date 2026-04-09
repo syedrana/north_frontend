@@ -10,6 +10,8 @@ import {
 import QuickSettingsForm from "./QuickSettingsForm";
 import SettingsJsonEditor from "./SettingsJsonEditor";
 
+const isTrendingType = (type) => type === "trending" || type === "trending_products";
+
 export default function SectionEditorForm({
   mode,
   formData,
@@ -93,7 +95,7 @@ export default function SectionEditorForm({
       };
     }
 
-    if (formData.type === "trending_products") {
+    if (isTrendingType(formData.type)) {
       return {
         limit: String(parsed?.limit ?? 8),
         windowDays: String(parsed?.windowDays ?? 30),
@@ -268,10 +270,7 @@ export default function SectionEditorForm({
           return { ...current, limit: value === "" ? "" : Number(value) };
         }
 
-        if (
-          prev.type === "trending_products" &&
-          ["limit", "windowDays", "salesWeight", "wishlistWeight", "viewWeight"].includes(field)
-        ) {
+        if (isTrendingType(prev.type) && ["limit", "windowDays", "salesWeight", "wishlistWeight", "viewWeight"].includes(field)) {
           return { ...current, [field]: value === "" ? "" : Number(value) };
         }
 
