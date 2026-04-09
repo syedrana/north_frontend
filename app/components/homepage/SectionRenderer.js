@@ -53,6 +53,15 @@ function renderSection(section, index) {
           key={section?._id || section?.id || index}
           title={section?.title}
           products={section?.items}
+          useApiFallback
+          query={{
+            limit: section?.limit,
+            windowDays: section?.windowDays,
+            categoryId: section?.categoryId,
+            salesWeight: section?.salesWeight,
+            wishlistWeight: section?.wishlistWeight,
+            viewWeight: section?.viewWeight,
+          }}
         />
       );
     case "recently_viewed":

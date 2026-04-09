@@ -3,6 +3,7 @@ import CategoryGridFields from "./CategoryGridFields";
 import FlashSaleFields from "./FlashSaleFields";
 import HeroBannerFields from "./HeroBannerFields";
 import ProductGridFields from "./ProductGridFields";
+import TrendingProductsFields from "./TrendingProductsFields";
 
 export default function QuickSettingsForm({
   type,
@@ -39,6 +40,10 @@ export default function QuickSettingsForm({
 
   if (type === "flash_sale") {
     return <FlashSaleFields values={values} onChange={onChange} />;
+  }
+
+  if (type === "trending_products") {
+    return <TrendingProductsFields values={values} onChange={onChange} />;
   }
 
   return null;

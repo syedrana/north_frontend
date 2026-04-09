@@ -93,6 +93,17 @@ export default function SectionEditorForm({
       };
     }
 
+    if (formData.type === "trending_products") {
+      return {
+        limit: String(parsed?.limit ?? 8),
+        windowDays: String(parsed?.windowDays ?? 30),
+        categoryId: parsed?.categoryId || "",
+        salesWeight: String(parsed?.salesWeight ?? 5),
+        wishlistWeight: String(parsed?.wishlistWeight ?? 3),
+        viewWeight: String(parsed?.viewWeight ?? 1),
+      };
+    }
+
     return {};
   }, [formData.settingsJson, formData.type]);
 
@@ -255,6 +266,13 @@ export default function SectionEditorForm({
 
         if (prev.type === "flash_sale" && field === "limit") {
           return { ...current, limit: value === "" ? "" : Number(value) };
+        }
+
+        if (
+          prev.type === "trending_products" &&
+          ["limit", "windowDays", "salesWeight", "wishlistWeight", "viewWeight"].includes(field)
+        ) {
+          return { ...current, [field]: value === "" ? "" : Number(value) };
         }
 
         return { ...current, [field]: value };

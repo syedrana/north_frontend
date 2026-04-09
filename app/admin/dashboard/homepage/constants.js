@@ -4,6 +4,7 @@ export const SECTION_TYPES = [
   { value: "product_grid", label: "Product Grid" },
   { value: "campaign_banner", label: "Campaign Banner" },
   { value: "flash_sale", label: "Flash Sale" },
+  { value: "trending_products", label: "Trending Products" },
 ];
 
 export const PRODUCT_GRID_SOURCES = [
@@ -46,6 +47,14 @@ export const SECTION_DEFAULT_SETTINGS = {
     mode: "active",
     limit: 8,
     flashSaleId: "",
+  },
+  trending_products: {
+    limit: 8,
+    windowDays: 30,
+    categoryId: "",
+    salesWeight: 5,
+    wishlistWeight: 3,
+    viewWeight: 1,
   },
 };
 
