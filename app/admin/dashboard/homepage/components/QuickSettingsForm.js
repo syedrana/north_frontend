@@ -3,6 +3,7 @@ import CategoryGridFields from "./CategoryGridFields";
 import FlashSaleFields from "./FlashSaleFields";
 import HeroBannerFields from "./HeroBannerFields";
 import ProductGridFields from "./ProductGridFields";
+import RecentlyViewedFields from "./RecentlyViewedFields";
 import TrendingProductsFields from "./TrendingProductsFields";
 
 const isTrendingType = (type) => type === "trending" || type === "trending_products";
@@ -46,6 +47,10 @@ export default function QuickSettingsForm({
 
   if (isTrendingType(type)) {
     return <TrendingProductsFields values={values} onChange={onChange} />;
+  }
+
+  if (type === "recently_viewed") {
+    return <RecentlyViewedFields values={values} onChange={onChange} />;
   }
 
   return null;

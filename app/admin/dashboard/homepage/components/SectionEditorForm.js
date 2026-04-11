@@ -106,6 +106,12 @@ export default function SectionEditorForm({
       };
     }
 
+    if (formData.type === "recently_viewed") {
+      return {
+        limit: String(parsed?.limit ?? 10),
+      };
+    }
+
     return {};
   }, [formData.settingsJson, formData.type]);
 
@@ -272,6 +278,10 @@ export default function SectionEditorForm({
 
         if (isTrendingType(prev.type) && ["limit", "windowDays", "salesWeight", "wishlistWeight", "viewWeight"].includes(field)) {
           return { ...current, [field]: value === "" ? "" : Number(value) };
+        }
+
+        if (prev.type === "recently_viewed" && field === "limit") {
+          return { ...current, limit: value === "" ? "" : Number(value) };
         }
 
         return { ...current, [field]: value };

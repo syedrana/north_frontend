@@ -66,7 +66,13 @@ function renderSection(section, index) {
         />
       );
     case "recently_viewed":
-      return <RecentlyViewedProducts key={section?._id || section?.id || index} title={section?.title} />;
+      return (
+        <RecentlyViewedProducts
+          key={section?._id || section?.id || index}
+          title={section?.title}
+          limit={section?.limit}
+        />
+      );
     default:
       return null;
   }

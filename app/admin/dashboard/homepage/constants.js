@@ -5,6 +5,7 @@ export const SECTION_TYPES = [
   { value: "campaign_banner", label: "Campaign Banner" },
   { value: "flash_sale", label: "Flash Sale" },
   { value: "trending", label: "Trending Products" },
+  { value: "recently_viewed", label: "Recently Viewed" },
 ];
 
 export const PRODUCT_GRID_SOURCES = [
@@ -63,6 +64,9 @@ export const SECTION_DEFAULT_SETTINGS = {
     salesWeight: 5,
     wishlistWeight: 3,
     viewWeight: 1,
+  },
+  recently_viewed: {
+    limit: 10,
   },
 };
 
