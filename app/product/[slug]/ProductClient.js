@@ -156,7 +156,7 @@ export default function ProductClient({
   useEffect(() => {
   const trackView = async () => {
     try {
-      await api.post("/recentlyviewed/track-view", {
+      await apiServer.post("/recentlyviewed/track-view", {
         productId: product._id,
       });
     } catch (err) {
