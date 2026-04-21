@@ -31,7 +31,7 @@ export default function RecentlyViewedProducts({ title = "Recently Viewed", limi
       try {
         setLoading(true);
         const guestId = ensureGuestId();
-        const response = await api.get("/recently-viewed", {
+        const response = await api.get("/recentlyviewed", {
           headers: guestId
             ? {
               "x-guest-id": guestId,
