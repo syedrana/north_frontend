@@ -1,5 +1,6 @@
 "use client";
 
+import api from "@/lib/api";
 import apiServer from "@/lib/apiServer";
 import Image from "next/image";
 import Link from "next/link";
@@ -156,7 +157,7 @@ export default function ProductClient({
   useEffect(() => {
   const trackView = async () => {
     try {
-      await apiServer.post("/recentlyviewed/track-view", {
+      await api.post("/recentlyviewed/track-view", {
         productId: product._id,
       });
     } catch (err) {

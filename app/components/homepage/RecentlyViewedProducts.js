@@ -5,17 +5,17 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-const GUEST_STORAGE_KEY = "guest_id";
+// const GUEST_STORAGE_KEY = "guest_id";
 
-const ensureGuestId = () => {
-  if (typeof window === "undefined") return "";
-  const existing = window.localStorage.getItem(GUEST_STORAGE_KEY);
-  if (existing) return existing;
+// const ensureGuestId = () => {
+//   if (typeof window === "undefined") return "";
+//   const existing = window.localStorage.getItem(GUEST_STORAGE_KEY);
+//   if (existing) return existing;
 
-  const generated = `guest_${crypto.randomUUID()}`;
-  window.localStorage.setItem(GUEST_STORAGE_KEY, generated);
-  return generated;
-};
+//   const generated = `guest_${crypto.randomUUID()}`;
+//   window.localStorage.setItem(GUEST_STORAGE_KEY, generated);
+//   return generated;
+// };
 
 const normalizeProduct = (item) => item?.product || item?.productId || item;
 
@@ -30,17 +30,29 @@ export default function RecentlyViewedProducts({ title = "Recently Viewed", limi
     const loadRecentlyViewed = async () => {
       try {
         setLoading(true);
-        const guestId = ensureGuestId();
-        const response = await api.get("/recentlyviewed", {
-          headers: guestId
-            ? {
-              "x-guest-id": guestId,
-            }
-            : undefined,
+        // const guestId = ensureGuestId();
+        // const requestConfig = {
+        //   headers: guestId
+        //     ? {
+        //       "x-guest-id": guestId,
+        //       }
+        //     : undefined,
+        const requestConfig = {
           params: Number.isFinite(Number(limit)) && Number(limit) > 0 ? { limit: Number(limit) } : undefined,
-        });
-        const data = response?.data;
-        const items = Array.isArray(data?.products) ? data.products : Array.isArray(data) ? data : [];
+        };
+
+        const response = await api.get("/recentlyviewed", requestConfig);
+
+        const data = response?.data?.data || response?.data;
+        const items = Array.isArray(data?.products)
+          ? data.products
+          : Array.isArray(data?.recentlyViewed)
+            ? data.recentlyViewed
+            : Array.isArray(data?.items)
+              ? data.items
+              : Array.isArray(data)
+                ? data
+                : [];
         const normalized = items
           .map((entry) => ({
             viewedAt: entry?.viewedAt,
