@@ -19,6 +19,34 @@ import { useEffect, useState } from "react";
 
 const normalizeProduct = (item) => item?.product || item?.productId || item;
 
+const getVariantData = (product = {}) => {
+  const variants = Array.isArray(product?.variants) ? product.variants : [];
+  const defaultVariant = variants.find((variant) => variant?.isDefault) || variants[0] || null;
+
+  const variantImage = defaultVariant?.images?.[0]?.url;
+  const fallbackImage = product?.images?.[0]?.url || product?.thumbnail || product?.image;
+  const image = variantImage || fallbackImage || null;
+
+  const rawPrice = defaultVariant?.discountPrice ?? defaultVariant?.price ?? product?.discountPrice ?? product?.price;
+  const price = Number(rawPrice);
+
+  return {
+    image,
+    price: Number.isFinite(price) ? price : null,
+  };
+};
+
+const formatCurrency = (value) => {
+  const amount = Number(value);
+  if (!Number.isFinite(amount)) return null;
+
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: amount % 1 === 0 ? 0 : 2,
+  }).format(amount);
+};
+
 export default function RecentlyViewedProducts({ title = "Recently Viewed", limit }) {
 
   const [products, setProducts] = useState([]);
@@ -94,6 +122,8 @@ export default function RecentlyViewedProducts({ title = "Recently Viewed", limi
           const item = product?.product || {};
           const id = item?._id || item?.id || item?.slug || index;
           const href = item?.href || `/product/${item?.slug || ""}`;
+          const { image, price } = getVariantData(item);
+          const formattedPrice = formatCurrency(price);
 
           return (
             <article
@@ -101,14 +131,18 @@ export default function RecentlyViewedProducts({ title = "Recently Viewed", limi
               className="min-w-[220px] max-w-[220px] flex-shrink-0 rounded-lg border bg-white p-3 shadow-sm"
             >
               <Link href={href}>
-                {item?.image && (
+                {image ? (
                   <Image
-                    src={item.image}
+                    src={image}
                     alt={item?.name || "Product"}
                     width={300}
                     height={220}
                     className="h-36 w-full rounded object-cover"
                   />
+                  ) : (
+                  <div className="flex h-36 w-full items-center justify-center rounded bg-slate-100 text-sm text-slate-400">
+                    No image
+                  </div>
                 )}
               </Link>
 
@@ -116,7 +150,7 @@ export default function RecentlyViewedProducts({ title = "Recently Viewed", limi
                 {item?.name || "Product"}
               </Link>
 
-              <p className="mt-1 font-semibold text-emerald-600">${item?.price ?? ""}</p>
+              <p className="mt-1 font-semibold text-emerald-600">{formattedPrice || "—"}</p>
             </article>
           );
         })}
