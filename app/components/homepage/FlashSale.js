@@ -163,9 +163,9 @@ export default function FlashSale({ title = "Flash Sale", sale, endsAt, startsAt
                     <Link href={href} className="line-clamp-2 font-medium text-slate-900 transition hover:text-orange-700">
                       {product?.name || "Product"}
                     </Link>
-                    {product?.categoryId && (
+                    {/* {product?.categoryId && (
                       <p className="mt-1 text-xs text-slate-400">Category ID: {String(product.categoryId)}</p>
-                    )}
+                    )} */}
                   </div>
 
                   <div className="flex items-end justify-between gap-3">
@@ -176,19 +176,19 @@ export default function FlashSale({ title = "Flash Sale", sale, endsAt, startsAt
                       )}
                     </div>
                     <div className="text-right text-xs text-slate-500">
-                      <div>Stock</div>
+                      {/* <div>Stock</div>
                       <div className={soldOut ? "font-semibold text-red-600" : "font-semibold text-slate-700"}>
                         {Number.isFinite(Number(product?.stock)) ? product.stock : "—"}
-                      </div>
+                      </div> */}
                     </div>
                   </div>
 
-                  <Link
+                  {/* <Link
                     href={href}
                     className="block rounded-xl bg-slate-950 px-4 py-2.5 text-center text-sm font-medium text-white transition hover:bg-orange-600"
                   >
                     {soldOut ? "View Details" : "Shop Now"}
-                  </Link>
+                  </Link> */}
                 </div>
               </article>
             );

@@ -63,21 +63,21 @@ export default function TrendingProducts({
           const regularPrice = formatCurrency(product?.price);
 
           return (
-            <article key={id} className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
-              <Link href={href} className="block overflow-hidden rounded-xl bg-slate-100">
+            <article key={id} className="mx-auto w-full max-w-[220px] rounded-lg border border-slate-200 bg-white p-3 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
+              <Link href={href} className="block overflow-hidden rounded bg-slate-100">
                 {product?.image ? (
                   <Image
                     src={product.image}
                     alt={product?.name || "Product"}
-                    width={420}
-                    height={320}
-                    className="h-40 w-full object-cover transition duration-300 hover:scale-105"
+                    width={300}
+                    height={220}
+                    className="h-36 w-full object-cover transition duration-300 hover:scale-105"
                   />
                 ) : (
                   <div className="flex h-40 items-center justify-center text-sm text-slate-400">No image</div>
                 )}
               </Link>
-              <Link href={href} className="mt-3 line-clamp-2 block font-medium text-slate-900 hover:text-slate-700">
+              <Link href={href} className="mt-3 line-clamp-2 block text-sm font-medium text-slate-900 hover:text-slate-700">
                 {product?.name || "Product"}
               </Link>
               <div className="mt-2 flex items-center gap-2">

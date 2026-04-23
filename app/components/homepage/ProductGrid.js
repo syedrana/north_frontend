@@ -11,22 +11,22 @@ export default function ProductGrid({ title, products = [] }) {
     <section>
       {title && <h2 className="mb-4 text-xl font-semibold">{title}</h2>}
 
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-3 lg:grid-cols-4">
         {products.map((product, index) => {
           const id = product?._id || product?.id || product?.slug || index;
           const href = product?.href || `/product/${product?.slug || ""}`;
 
           return (
-            <article key={id} className="rounded-lg border p-3 shadow-sm">
+            <article key={id} className="mx-auto w-full max-w-[220px] rounded-lg border bg-white p-3 shadow-sm">
               <div className="relative">
                 <Link href={href}>
                   {product?.image && (
                     <Image
                       src={product.image}
                       alt={product?.name || "Product"}
-                      width={400}
-                      height={300}
-                      className="h-40 w-full rounded object-cover"
+                      width={300}
+                      height={220}
+                      className="h-36 w-full rounded object-cover"
                     />
                   )}
                 </Link>
@@ -40,7 +40,7 @@ export default function ProductGrid({ title, products = [] }) {
                 </button>
               </div>
 
-              <Link href={href} className="mt-3 block font-medium">
+              <Link href={href} className="mt-3 block text-sm font-medium text-gray-900">
                 {product?.name || "Product"}
               </Link>
 
@@ -55,12 +55,12 @@ export default function ProductGrid({ title, products = [] }) {
                 )}
               </div>
 
-              <button
+              {/* <button
                 type="button"
                 className="mt-3 w-full rounded bg-black px-3 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
               >
                 Add to Cart
-              </button>
+              </button> */}
             </article>
           );
         })}
