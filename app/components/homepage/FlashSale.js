@@ -145,7 +145,7 @@ export default function FlashSale({ title = "Flash Sale", sale, endsAt, startsAt
                         alt={product?.name || "Product"}
                         width={480}
                         height={320}
-                        className="h-48 w-full object-cover transition duration-300 group-hover:scale-105"
+                        className="h-60 w-full object-cover transition duration-300 group-hover:scale-105"
                       />
                     ) : (
                       <div className="flex h-48 items-center justify-center text-sm text-slate-400">No image</div>

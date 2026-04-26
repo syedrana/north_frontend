@@ -9,15 +9,15 @@ export default function ProductGrid({ title, products = [] }) {
 
   return (
     <section>
-      {title && <h2 className="mb-4 text-xl font-semibold">{title}</h2>}
+      {title && <h2 className="mb-3 text-xl font-semibold">{title}</h2>}
 
-      <div className="grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-6 ">
         {products.map((product, index) => {
           const id = product?._id || product?.id || product?.slug || index;
           const href = product?.href || `/product/${product?.slug || ""}`;
 
           return (
-            <article key={id} className="mx-auto w-full max-w-[220px] rounded-lg border bg-white p-3 shadow-sm">
+            <article key={id} className="w-full rounded-lg border bg-white ">
               <div className="relative">
                 <Link href={href}>
                   {product?.image && (
@@ -25,8 +25,8 @@ export default function ProductGrid({ title, products = [] }) {
                       src={product.image}
                       alt={product?.name || "Product"}
                       width={300}
-                      height={220}
-                      className="h-36 w-full rounded object-cover"
+                      height={320}
+                      className="h-50 w-full rounded object-cover"
                     />
                   )}
                 </Link>
@@ -40,18 +40,18 @@ export default function ProductGrid({ title, products = [] }) {
                 </button>
               </div>
 
-              <Link href={href} className="mt-3 block text-sm font-medium text-gray-900">
+              <Link href={href} className="mt-3 pl-2 block text-sm font-medium text-gray-900">
                 {product?.name || "Product"}
               </Link>
 
-              <div className="mt-1 flex items-center gap-2">
+              <div className="mt-1 pl-2 pb-2 flex items-center gap-2">
                 {product?.discountPrice ? (
                   <>
-                    <span className="font-semibold text-emerald-600">${product.discountPrice}</span>
-                    <span className="text-sm text-gray-500 line-through">${product?.price ?? ""}</span>
+                    <span className="font-semibold text-emerald-600">৳{product.discountPrice}</span>
+                    <span className="text-sm text-gray-500 line-through">৳{product?.price ?? ""}</span>
                   </>
                 ) : (
-                  <span className="font-semibold text-emerald-600">${product?.price ?? ""}</span>
+                  <span className="font-semibold text-emerald-600">৳{product?.price ?? ""}</span>
                 )}
               </div>
 
