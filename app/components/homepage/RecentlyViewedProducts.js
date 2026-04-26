@@ -4,6 +4,7 @@ import api from "@/lib/api";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import WishlistButton from "../wishlist/WishlistButton";
 
 // const GUEST_STORAGE_KEY = "guest_id";
 
@@ -130,6 +131,7 @@ export default function RecentlyViewedProducts({ title = "Recently Viewed", limi
               key={id}
               className="min-w-[220px] max-w-[220px] flex-shrink-0 rounded-lg border bg-white p-3 shadow-sm"
             >
+              <div className="relative">
               <Link href={href}>
                 {image ? (
                   <Image
@@ -145,6 +147,11 @@ export default function RecentlyViewedProducts({ title = "Recently Viewed", limi
                   </div>
                 )}
               </Link>
+              <WishlistButton
+                productId={item?._id || item?.id}
+                className="rounded-full bg-white/90 p-1.5 text-gray-700"
+              />
+              </div>
 
               <Link href={href} className="mt-3 block text-sm font-medium text-gray-900">
                 {item?.name || "Product"}

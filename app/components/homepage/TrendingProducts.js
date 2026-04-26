@@ -3,6 +3,7 @@
 import { useTrendingProducts } from "@/hooks/useTrendingProducts";
 import Image from "next/image";
 import Link from "next/link";
+import WishlistButton from "../wishlist/WishlistButton";
 
 function formatCurrency(value) {
   const amount = Number(value);
@@ -64,6 +65,7 @@ export default function TrendingProducts({
 
           return (
             <article key={id} className="mx-auto w-full max-w-[220px] rounded-lg border border-slate-200 bg-white p-3 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
+              <div className="relative">
               <Link href={href} className="block overflow-hidden rounded bg-slate-100">
                 {product?.image ? (
                   <Image
@@ -77,6 +79,11 @@ export default function TrendingProducts({
                   <div className="flex h-40 items-center justify-center text-sm text-slate-400">No image</div>
                 )}
               </Link>
+              <WishlistButton
+                productId={product?._id || product?.id}
+                className="rounded-full bg-white/90 p-1.5 text-gray-700"
+              />
+              </div>
               <Link href={href} className="mt-3 line-clamp-2 block text-sm font-medium text-slate-900 hover:text-slate-700">
                 {product?.name || "Product"}
               </Link>

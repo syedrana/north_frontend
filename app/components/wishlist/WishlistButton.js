@@ -10,11 +10,16 @@ export default function WishlistButton({ productId, className = "" }) {
   const { toggle, isInWishlist } = useWishlist();
   const { user } = useAuth();
 
-  const active = isInWishlist(productId);
+  const hasProductId = Boolean(productId);
+  const active = hasProductId && isInWishlist(productId);
 
   const handleClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
+
+    if (!hasProductId) {
+      return;
+    }
 
     if (!user) {
       router.push("/customer/login");
@@ -27,6 +32,8 @@ export default function WishlistButton({ productId, className = "" }) {
   return (
     <button
       onClick={handleClick}
+      disabled={!hasProductId}
+      aria-disabled={!hasProductId}
       className={`absolute top-2 right-2 ${className}`}
     >
       <Heart
@@ -39,4 +46,5 @@ export default function WishlistButton({ productId, className = "" }) {
       />
     </button>
   );
+  
 }

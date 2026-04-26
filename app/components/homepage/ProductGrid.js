@@ -1,6 +1,6 @@
-import { Heart } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import WishlistButton from "../wishlist/WishlistButton";
 
 export default function ProductGrid({ title, products = [] }) {
   if (!Array.isArray(products) || products.length === 0) {
@@ -31,13 +31,10 @@ export default function ProductGrid({ title, products = [] }) {
                   )}
                 </Link>
 
-                <button
-                  type="button"
-                  aria-label="Add to wishlist"
-                  className="absolute right-2 top-2 rounded-full bg-white/90 p-1.5 text-gray-700 transition hover:text-red-500"
-                >
-                  <Heart className="h-4 w-4" />
-                </button>
+                <WishlistButton
+                  productId={product?._id || product?.id}
+                  className="rounded-full bg-white/90 p-1.5 text-gray-700"
+                />
               </div>
 
               <Link href={href} className="mt-3 pl-2 block text-sm font-medium text-gray-900">
