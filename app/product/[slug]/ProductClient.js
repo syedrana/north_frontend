@@ -5,7 +5,7 @@ import apiServer from "@/lib/apiServer";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AddToCartButton from "../../components/cart/AddToCartButton";
 import BuyNowButton from "../../components/cart/BuyNowButton";
 import WishlistButton from "../../components/wishlist/WishlistButton";
@@ -56,7 +56,7 @@ export default function ProductClient({
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [savedAddresses, setSavedAddresses] = useState([]);
   const [addressesLoading, setAddressesLoading] = useState(isAuthenticated);
-  const initialIsAuthenticated = useRef(isAuthenticated);
+  //const initialIsAuthenticated = useRef(isAuthenticated);
 
   const colors = useMemo(
     () => [...new Set(variants.map((variant) => variant.color).filter(Boolean))],
@@ -132,8 +132,30 @@ export default function ProductClient({
     trackClick();
   }, [searchId, product._id, position]);
 
+  // useEffect(() => {
+  //   if (!initialIsAuthenticated.current) {
+  //     setAddressesLoading(false);
+  //     return;
+  //   }
+
+  //   const loadAddresses = async () => {
+  //     try {
+  //       setAddressesLoading(true);
+  //       const res = await apiServer.get("/address");
+  //       setSavedAddresses(res.data?.addresses || []);
+  //     } catch (error) {
+  //       console.error("Failed to load addresses", error);
+  //       setSavedAddresses([]);
+  //     } finally {
+  //       setAddressesLoading(false);
+  //     }
+  //   };
+
+  //   loadAddresses();
+  // }, []);
+
   useEffect(() => {
-    if (!initialIsAuthenticated.current) {
+    if (!isAuthenticated) {
       setAddressesLoading(false);
       return;
     }
@@ -141,7 +163,10 @@ export default function ProductClient({
     const loadAddresses = async () => {
       try {
         setAddressesLoading(true);
-        const res = await apiServer.get("/address");
+        const res = await api.get("/address"); // ⚠️ apiServer না
+
+        console.log("Address API:", res.data);
+
         setSavedAddresses(res.data?.addresses || []);
       } catch (error) {
         console.error("Failed to load addresses", error);
@@ -152,7 +177,7 @@ export default function ProductClient({
     };
 
     loadAddresses();
-  }, []);
+  }, [isAuthenticated]);
 
   useEffect(() => {
   const trackView = async () => {
@@ -167,6 +192,13 @@ export default function ProductClient({
 
   trackView();
 }, [product._id]);
+
+console.log("isAuthenticated:", isAuthenticated);
+console.log("savedAddresses:", savedAddresses);
+console.log("selectedAddress:", selectedAddress);
+console.log("ADDRESS:", selectedAddress);
+console.log("VARIANT:", selectedVariant);
+console.log("PRODUCT:", product);
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-10 grid grid-cols-1 md:grid-cols-2 gap-10">

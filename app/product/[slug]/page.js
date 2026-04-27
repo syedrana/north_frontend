@@ -1,4 +1,5 @@
 import apiServer from "@/lib/apiServer";
+import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import ProductClient from "./ProductClient";
 
@@ -61,12 +62,20 @@ export default async function ProductPage({ params, searchParams  }) {
     variants.find((v) => v.isDefault) ||
     variants[0];
 
+  // ✅ AUTH CHECK
+  const cookieStore = await cookies();
+  // const token = cookieStore.get("token")?.value;
+  const token = cookieStore?.getAll?.().find(c => c.name === "token")?.value;
+
+  const isAuthenticated = !!token;
+
   return (
     <ProductClient
       product={product}
       variants={variants}
       defaultVariant={defaultVariant}
       searchId={searchId}
+      isAuthenticated={isAuthenticated}
     />
   );
 }
