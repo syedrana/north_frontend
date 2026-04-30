@@ -45,6 +45,7 @@ export default function ProductClient({
   defaultVariant,
   isAuthenticated,
   searchId,
+  initialDeliveryEstimate,
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -56,6 +57,8 @@ export default function ProductClient({
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [savedAddresses, setSavedAddresses] = useState([]);
   const [addressesLoading, setAddressesLoading] = useState(isAuthenticated);
+
+  const [deliveryEstimate, setDeliveryEstimate] = useState(initialDeliveryEstimate);
   //const initialIsAuthenticated = useRef(isAuthenticated);
 
   const colors = useMemo(
@@ -73,10 +76,10 @@ export default function ProductClient({
     return savedAddresses.find((address) => address.isDefault) || savedAddresses[0];
   }, [savedAddresses]);
 
-  const deliveryFee = useMemo(
-    () => resolveDeliveryFee(selectedAddress, product, selectedVariant),
-    [selectedAddress, product, selectedVariant]
-  );
+  // const deliveryFee = useMemo(
+  //   () => resolveDeliveryFee(selectedAddress, product, selectedVariant),
+  //   [selectedAddress, product, selectedVariant]
+  // );
 
   const codAvailable = useMemo(
     () => resolveCodAvailable(product, selectedVariant),
@@ -132,28 +135,6 @@ export default function ProductClient({
     trackClick();
   }, [searchId, product._id, position]);
 
-  // useEffect(() => {
-  //   if (!initialIsAuthenticated.current) {
-  //     setAddressesLoading(false);
-  //     return;
-  //   }
-
-  //   const loadAddresses = async () => {
-  //     try {
-  //       setAddressesLoading(true);
-  //       const res = await apiServer.get("/address");
-  //       setSavedAddresses(res.data?.addresses || []);
-  //     } catch (error) {
-  //       console.error("Failed to load addresses", error);
-  //       setSavedAddresses([]);
-  //     } finally {
-  //       setAddressesLoading(false);
-  //     }
-  //   };
-
-  //   loadAddresses();
-  // }, []);
-
   useEffect(() => {
     if (!isAuthenticated) {
       setAddressesLoading(false);
@@ -179,26 +160,51 @@ export default function ProductClient({
     loadAddresses();
   }, [isAuthenticated]);
 
+  /* ================= SHIPPING CALC ================= */
   useEffect(() => {
-  const trackView = async () => {
+  if (!selectedAddress || !selectedVariant) return;
+
+  const loadShipping = async () => {
     try {
-      await api.post("/recentlyviewed/track-view", {
-        productId: product._id,
+      const res = await api.get(`/products/${product.slug}`, {
+        params: {
+          district: selectedAddress.district,
+          variantId: selectedVariant._id,
+          quantity: 1,
+        },
       });
+
+      setDeliveryEstimate(res.data.deliveryEstimate);
     } catch (err) {
-      console.log("Tracking failed", err);
+      console.log("Shipping load failed", err);
     }
   };
 
-  trackView();
-}, [product._id]);
+  loadShipping();
+}, [selectedAddress, selectedVariant, product.slug]);
 
-console.log("isAuthenticated:", isAuthenticated);
-console.log("savedAddresses:", savedAddresses);
-console.log("selectedAddress:", selectedAddress);
-console.log("ADDRESS:", selectedAddress);
-console.log("VARIANT:", selectedVariant);
-console.log("PRODUCT:", product);
+  const deliveryFee = deliveryEstimate?.total ?? null;
+
+  useEffect(() => {
+    const trackView = async () => {
+      try {
+        await api.post("/recentlyviewed/track-view", {
+          productId: product._id,
+        });
+      } catch (err) {
+        console.log("Tracking failed", err);
+      }
+    };
+
+    trackView();
+  }, [product._id]);
+
+// console.log("isAuthenticated:", isAuthenticated);
+// console.log("savedAddresses:", savedAddresses);
+// console.log("selectedAddress:", selectedAddress);
+// console.log("ADDRESS:", selectedAddress);
+// console.log("VARIANT:", selectedVariant);
+console.log("deliveryFee:", deliveryEstimate);
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-10 grid grid-cols-1 md:grid-cols-2 gap-10">

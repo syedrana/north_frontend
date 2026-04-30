@@ -43,10 +43,12 @@ export default async function ProductPage({ params, searchParams  }) {
   const { variant, searchId } = await searchParams;
 
   let product;
+  let deliveryEstimate = null;
 
   try {
     const { data } = await apiServer.get(`/products/${slug}`);
     product = data.product;
+    deliveryEstimate = data.deliveryEstimate;
   } catch {
     notFound();
   }
@@ -76,6 +78,7 @@ export default async function ProductPage({ params, searchParams  }) {
       defaultVariant={defaultVariant}
       searchId={searchId}
       isAuthenticated={isAuthenticated}
+      initialDeliveryEstimate={deliveryEstimate}
     />
   );
 }
