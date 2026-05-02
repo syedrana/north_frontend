@@ -8,23 +8,39 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { useEffect, useState } from "react";
+import Image from "next/image";
+import { useEffect, useMemo, useState } from "react";
 import api from "../../../lib/api";
 
 import match from "autosuggest-highlight/match";
 import parse from "autosuggest-highlight/parse";
 
 export default function CategoryForm({ editData, onSuccess }) {
-  /* ---------------- State ---------------- */
   const [name, setName] = useState(editData?.name ?? "");
   const [parent, setParent] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
 
   const [options, setOptions] = useState([]);
   const [inputValue, setInputValue] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  /* -------- Load parent category (EDIT mode) -------- */
+  const existingImageUrl =
+    typeof editData?.image === "string"
+      ? editData.image
+      : editData?.image?.url || "";
+
+  const previewUrl = useMemo(() => {
+    if (imageFile) return URL.createObjectURL(imageFile);
+    return existingImageUrl;
+  }, [imageFile, existingImageUrl]);
+
+  useEffect(() => {
+    return () => {
+      if (imageFile) URL.revokeObjectURL(previewUrl);
+    };
+  }, [imageFile, previewUrl]);
+
   useEffect(() => {
     if (!editData?.parentId) return;
     let cancelled = false;
@@ -41,7 +57,6 @@ export default function CategoryForm({ editData, onSuccess }) {
     };
   }, [editData?.parentId]);
 
-  /* -------- Server-side search for parent -------- */
   useEffect(() => {
     if (!inputValue) return;
     let cancelled = false;
@@ -65,8 +80,7 @@ export default function CategoryForm({ editData, onSuccess }) {
     };
   }, [inputValue]);
 
-  /* ---------------- Submit ---------------- */
-  const handleSubmit = async e => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
@@ -75,16 +89,20 @@ export default function CategoryForm({ editData, onSuccess }) {
       return;
     }
 
-    const payload = {
-      name: name.trim(),
-      parentId: parent?._id || null,
-    };
+    const formData = new FormData();
+    formData.append("name", name.trim());
+    if (parent?._id) formData.append("parentId", parent._id);
+    if (imageFile) formData.append("image", imageFile);
 
     try {
       if (editData) {
-        await api.put(`/categorys/${editData._id}`, payload);
+        await api.put(`/categorys/${editData._id}`, formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
       } else {
-        await api.post("/categorys/create", payload);
+        await api.post("/categorys/create", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
       }
 
       onSuccess();
@@ -92,12 +110,12 @@ export default function CategoryForm({ editData, onSuccess }) {
       setParent(null);
       setInputValue("");
       setOptions([]);
+      setImageFile(null);
     } catch (err) {
       setError(err?.response?.data?.message || "Something went wrong");
     }
   };
 
-  /* ---------------- UI ---------------- */
   return (
     <Box
       component="form"
@@ -108,7 +126,6 @@ export default function CategoryForm({ editData, onSuccess }) {
         {editData ? "Edit Category" : "Add Category"}
       </Typography>
 
-      {/* Error Message */}
       {error && (
         <Typography
           variant="body2"
@@ -118,19 +135,17 @@ export default function CategoryForm({ editData, onSuccess }) {
         </Typography>
       )}
 
-      {/* Category Name */}
       <TextField
         fullWidth
         label="Category Name"
         value={name}
-        onChange={e => setName(e.target.value)}
+        onChange={(e) => setName(e.target.value)}
         required
         margin="normal"
         size="medium"
         className="mb-4"
       />
 
-      {/* Parent Category Searchable Autocomplete */}
       <Autocomplete
         options={options}
         value={parent}
@@ -142,14 +157,14 @@ export default function CategoryForm({ editData, onSuccess }) {
           setInputValue(value);
           if (!value) setOptions([]);
         }}
-        getOptionLabel={opt => opt.name ?? ""}
-        filterOptions={x => x}
+        getOptionLabel={(opt) => opt.name ?? ""}
+        filterOptions={(x) => x}
         isOptionEqualToValue={(o, v) => o._id === v?._id}
         size="medium"
         className="mb-4"
         sx={{
           "& .MuiInputBase-root": {
-            minHeight: 56, // mobile touch target
+            minHeight: 56,
           },
         }}
         renderOption={(props, option) => {
@@ -159,10 +174,7 @@ export default function CategoryForm({ editData, onSuccess }) {
           const parts = parse(text, matches);
 
           return (
-            <li
-              {...props}
-              className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-            >
+            <li {...props} className="px-4 py-2 hover:bg-gray-100 cursor-pointer">
               {parts.map((part, i) => (
                 <span
                   key={i}
@@ -178,7 +190,7 @@ export default function CategoryForm({ editData, onSuccess }) {
             </li>
           );
         }}
-        renderInput={params => (
+        renderInput={(params) => (
           <TextField
             {...params}
             label="Parent Category"
@@ -199,7 +211,29 @@ export default function CategoryForm({ editData, onSuccess }) {
         )}
       />
 
-      {/* Submit Button */}
+      <Button variant="outlined" component="label" fullWidth className="mt-2">
+        {imageFile ? "Change Image" : "Upload Image"}
+        <input
+          hidden
+          accept="image/*"
+          type="file"
+          onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+        />
+      </Button>
+
+      {previewUrl && (
+        <Box className="mt-3 border rounded p-2">
+          <Image
+            src={previewUrl}
+            alt="Category preview"
+            width={420}
+            height={220}
+            unoptimized
+            className="w-full max-h-52 object-contain rounded"
+          />
+        </Box>
+      )}
+
       <Button
         type="submit"
         variant="contained"
