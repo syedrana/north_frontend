@@ -28,7 +28,11 @@ export default function CategoryForm({ editData, onSuccess }) {
   const existingImageUrl =
     typeof editData?.image === "string"
       ? editData.image
-      : editData?.image?.url || "";
+      : editData?.image?.url ||
+        editData?.image?.secure_url ||
+        editData?.image?.path ||
+        editData?.image?.src ||
+        "";
 
   const previewUrl = useMemo(() => {
     if (imageFile) return URL.createObjectURL(imageFile);
@@ -47,7 +51,7 @@ export default function CategoryForm({ editData, onSuccess }) {
 
     (async () => {
       try {
-        const res = await api.get(`/categorys/${editData.parentId}`);
+        const res = await api.get(`/categories/${editData.parentId}`);
         if (!cancelled) setParent(res.data.category ?? null);
       } catch {}
     })();
@@ -65,7 +69,7 @@ export default function CategoryForm({ editData, onSuccess }) {
       try {
         setLoading(true);
         const res = await api.get(
-          `/categorys?search=${encodeURIComponent(inputValue)}`
+          `/categories?search=${encodeURIComponent(inputValue)}`
         );
         if (!cancelled) setOptions(res.data.categories ?? []);
       } catch {
@@ -96,11 +100,11 @@ export default function CategoryForm({ editData, onSuccess }) {
 
     try {
       if (editData) {
-        await api.put(`/categorys/${editData._id}`, formData, {
+        await api.put(`/categories/${editData._id}`, formData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
       } else {
-        await api.post("/categorys/create", formData, {
+        await api.post("/categories/create", formData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
       }

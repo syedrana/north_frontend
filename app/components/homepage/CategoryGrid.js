@@ -1,6 +1,19 @@
 import Image from "next/image";
 import Link from "next/link";
 
+function getCategoryImageUrl(category) {
+  if (!category) return "";
+
+  if (typeof category.image === "string") return category.image;
+
+  return (
+    category?.image?.url ||
+    category?.image?.secure_url ||
+    category?.thumbnail?.url ||
+    ""
+  );
+}
+
 export default function CategoryGrid({ categories = [] }) {
   if (!Array.isArray(categories) || categories.length === 0) {
     return null;
@@ -12,11 +25,13 @@ export default function CategoryGrid({ categories = [] }) {
         const key = category?._id || category?.id || category?.slug || index;
         const href = category?.href || `/shop?category=${category?.slug || ""}`;
 
+        const imageUrl = getCategoryImageUrl(category);
+
         return (
           <Link key={key} href={href} className="group overflow-hidden rounded-lg border">
-            {category?.image && (
+            {imageUrl && (
               <Image
-                src={category.image}
+                src={imageUrl}
                 alt={category?.name || "Category"}
                 width={400}
                 height={300}

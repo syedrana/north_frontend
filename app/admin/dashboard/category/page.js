@@ -16,7 +16,7 @@ export default function CategoryPage() {
 
     (async () => {
       try {
-        const res = await api.get("/categorys");
+        const res = await api.get("/categories");
         if (mounted) {
           setCategories(res.data.categories);
         }
@@ -32,7 +32,7 @@ export default function CategoryPage() {
 
   /* ✅ Reusable reload (NOT used inside effect) */
   const reloadCategories = async () => {
-    const res = await api.get("/categorys");
+    const res = await api.get("/categories");
     setCategories(res.data.categories);
   };
 

@@ -13,8 +13,12 @@ export default function CategoryTable({ data, onEdit, refresh }) {
   };
 
   const getImageUrl = (row) => {
-    if (typeof row?.image === "string") return row.image;
-    return row?.image?.url || "";
+    const image = row?.image;
+
+    if (typeof image === "string") return image;
+    if (!image || typeof image !== "object") return "";
+
+    return image.url || image.secure_url || image.path || image.src || "";
   };
 
   const columns = [
@@ -59,3 +63,4 @@ export default function CategoryTable({ data, onEdit, refresh }) {
     />
   );
 }
+
