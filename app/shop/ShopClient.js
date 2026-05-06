@@ -44,11 +44,32 @@ export default function ShopClient({
   const sort = params.get("sort") || "";
   const color = params.get("color") || "";
   const size = params.get("size") || "";
+  const category = params.get("category") || "";
   const page = Number(params.get("page") || 1);
 
   /* ================= STATE ================= */
   const [products, setProducts] = useState(initialProducts);
+  const [categoryTree, setCategoryTree] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    let ignore = false;
+
+    (async () => {
+      try {
+        const res = await api.get("/categories/tree");
+        if (!ignore) {
+          setCategoryTree(Array.isArray(res.data?.categories) ? res.data.categories : []);
+        }
+      } catch {
+        if (!ignore) setCategoryTree([]);
+      }
+    })();
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   /* ================= URL UPDATE ================= */
   const updateURL = (updates = {}) => {
@@ -78,6 +99,7 @@ export default function ShopClient({
             sort,
             color,
             size, 
+            category,
             page,
             limit: 12,
           },
@@ -113,7 +135,7 @@ export default function ShopClient({
     return () => {
       ignore = true;
     };
-  }, [search, minPrice, maxPrice, sort, color, size, page, sessionId]);
+  }, [search, minPrice, maxPrice, sort, color, size, category, page, sessionId]);
 
   /* ================= UI ================= */
   return (
@@ -178,6 +200,56 @@ export default function ShopClient({
                 >
                   {s}
                 </button>
+              ))}
+            </div>
+          </div>
+
+          {/* CATEGORY TREE */}
+          <div>
+            <h3 className="font-semibold mb-2">Categories</h3>
+            <div className="space-y-1">
+              <button
+                onClick={() => updateURL({ category: "", page: 1 })}
+                className={`block text-left text-sm ${
+                  !category ? "text-indigo-600 font-medium" : "text-gray-700"
+                }`}
+              >
+                All Categories
+              </button>
+
+              {categoryTree.map((parent) => (
+                <div key={parent._id}>
+                  <button
+                    onClick={() => updateURL({ category: parent.slug || "", page: 1 })}
+                    className={`block text-left text-sm ${
+                      category === (parent.slug || "")
+                        ? "text-indigo-600 font-medium"
+                        : "text-gray-800"
+                    }`}
+                  >
+                    {parent.name}
+                  </button>
+
+                  {Array.isArray(parent.children) && parent.children.length > 0 && (
+                    <div className="ml-3 mt-1 space-y-1">
+                      {parent.children.map((child) => (
+                        <button
+                          key={child._id}
+                          onClick={() =>
+                            updateURL({ category: child.slug || "", page: 1 })
+                          }
+                          className={`block text-left text-xs ${
+                            category === (child.slug || "")
+                              ? "text-indigo-600 font-medium"
+                              : "text-gray-600"
+                          }`}
+                        >
+                          └ {child.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           </div>

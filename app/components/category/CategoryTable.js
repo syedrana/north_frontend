@@ -1,14 +1,16 @@
 "use client";
 
+import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
+import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import { Avatar, IconButton, Stack } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import api from "../../../lib/api";
 
-export default function CategoryTable({ data, onEdit, refresh }) {
+export default function CategoryTable({ data, onEdit, refresh, onReorder }) {
   const handleDelete = async id => {
-    await api.delete(`/categorys/${id}`);
+    await api.delete(`/categories/${id}`);
     refresh();
   };
 
@@ -43,6 +45,20 @@ export default function CategoryTable({ data, onEdit, refresh }) {
             <EditIcon />
           </IconButton>
           <IconButton
+            onClick={() => onReorder?.(params.row._id, "up")}
+            disabled={params.rowIndex === 0}
+            title="Move up"
+          >
+            <ArrowUpwardIcon />
+          </IconButton>
+          <IconButton
+            onClick={() => onReorder?.(params.row._id, "down")}
+            disabled={params.rowIndex === data.length - 1}
+            title="Move down"
+          >
+            <ArrowDownwardIcon />
+          </IconButton>
+          <IconButton
             color="error"
             onClick={() => handleDelete(params.row._id)}
           >
@@ -63,4 +79,3 @@ export default function CategoryTable({ data, onEdit, refresh }) {
     />
   );
 }
-
