@@ -9,7 +9,7 @@ export default function ProductGrid({ title, products = [] }) {
 
   return (
     <section>
-      {title && <h2 className="mb-3 text-xl font-semibold">{title}</h2>}
+      {title && <h2 className="mb-3 text-xl font-semibold">{title}</h2>} 
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-6 ">
         {products.map((product, index) => {

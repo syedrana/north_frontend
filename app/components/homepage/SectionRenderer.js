@@ -23,7 +23,42 @@ function CampaignBanner({ section }) {
   );
 }
 
+const TRENDING_PRODUCT_SOURCES = new Set(["trending", "trending_products"]);
+
+function isTrendingProductGrid(section) {
+  return (
+    section?.type === "product_grid" &&
+    TRENDING_PRODUCT_SOURCES.has(String(section?.source || "").toLowerCase())
+  );
+}
+
+function getTrendingQuery(section) {
+  return {
+    limit: section?.limit,
+    windowDays: section?.windowDays,
+    categoryId: section?.categoryId,
+    salesWeight: section?.salesWeight,
+    wishlistWeight: section?.wishlistWeight,
+    viewWeight: section?.viewWeight,
+  };
+}
+
+function renderTrendingSection(section, index) {
+  return (
+    <TrendingProducts
+      key={section?._id || section?.id || index}
+      title={section?.title}
+      products={section?.items}
+      useApiFallback
+      query={getTrendingQuery(section)}
+    />
+  );
+}
+
 function renderSection(section, index) {
+  if (isTrendingProductGrid(section)) {
+    return renderTrendingSection(section, index);
+  }
   switch (section?.type) {
     case "hero_banner":
        return <HeroBanner key={section?._id || section?.id || index} data={section?.settings || section} />;
@@ -49,22 +84,7 @@ function renderSection(section, index) {
       );
     case "trending":
     case "trending_products":
-      return (
-        <TrendingProducts
-          key={section?._id || section?.id || index}
-          title={section?.title}
-          products={section?.items}
-          useApiFallback
-          query={{
-            limit: section?.limit,
-            windowDays: section?.windowDays,
-            categoryId: section?.categoryId,
-            salesWeight: section?.salesWeight,
-            wishlistWeight: section?.wishlistWeight,
-            viewWeight: section?.viewWeight,
-          }}
-        />
-      );
+      return renderTrendingSection(section, index);
     case "recently_viewed":
       return (
         <RecentlyViewedProducts
