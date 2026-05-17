@@ -124,9 +124,8 @@
 "use client";
 
 import {
-  ArrowRight,
   Flame,
-  TrendingUp,
+  TrendingUp
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -311,7 +310,7 @@ const ProductCard = memo(function ProductCard({
         )}
 
         {/* CTA */}
-        <Link
+        {/* <Link
           href={href}
           className="
             mt-4 inline-flex items-center gap-1
@@ -321,7 +320,7 @@ const ProductCard = memo(function ProductCard({
         >
           View Product
           <ArrowRight size={14} />
-        </Link>
+        </Link> */}
       </div>
     </article>
   );
@@ -394,9 +393,7 @@ export default function TrendingProducts({
   return (
     <section
       className="
-        rounded-3xl border border-slate-200/80
-        bg-white p-5 shadow-sm md:p-6
-      "
+        rounded-3xl"
     >
       {/* HEADER */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
@@ -451,8 +448,10 @@ export default function TrendingProducts({
         className="
           grid grid-cols-2 gap-3
           sm:grid-cols-3
+          md:grid-cols-4
           lg:grid-cols-5
           xl:grid-cols-6
+          2xl:grid-cols-7
         "
       >
         {products.map((product, index) => {
